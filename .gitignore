@@ -1,0 +1,9 @@
+.vscode/
+MPITape.jl
+
+*.txt
+
+
+*.tape
+*.json
+
