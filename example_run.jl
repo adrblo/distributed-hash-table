@@ -1,10 +1,36 @@
 using MPI
 using MPITape
 
+struct Particle
+    x::Float32
+    y::Float32
+    z::Float32
+    message::Int32
+    rank::Int32
+    velocity::Float32
+    mass::Float64
+end
+
+function Particle(message, rank)
+    return Particle(
+        rand(Float32),
+        rand(Float32),
+        rand(Float32),
+        message,
+        rank,
+        rand(Float32),
+        rand(),
+    )
+end
+
+function send_particle(dest, message, from, comm::MPI.Comm)
+    MPI.Isend(Particle(message, from), comm; dest=dest)
+end
+
 
 function myAllreduce!(sendrecv, op, comm::MPI.Comm)
     rank = MPI.Comm_rank(comm)
-    size = MPI.Comm_size(comm)
+    
 
     buf2 = similar(sendrecv)
 
@@ -17,20 +43,51 @@ function myAllreduce!(sendrecv, op, comm::MPI.Comm)
     end
 end
 
-MPITape.new_overdub(myAllreduce!, (:rank, "all", :(Dict("data" => args[1], "mode" => "CYC"))))
 
-function your_mpi_code()
+function occupied(arr)
+    counter = 0
+    for elem in arr
+        if elem !== nothing
+            counter += 1
+        end
+    end
+    return counter
+end
+
+#MPITape.new_overdub(myAllreduce!, (:rank, "all", :(Dict("data" => args[1], "mode" => "CYC"))))
+MPITape.new_overdub(send_particle, (:rank, :(args[1]), :(Dict("data" => "123", "mode" => "CYC"))))
+
+function main()
+    start_time = MPI.Wtime()
+    comm = MPI.COMM_WORLD
     rank = MPI.Comm_rank(MPI.COMM_WORLD)
+    size = MPI.Comm_size(comm)
 
 
-    vec = [1, 2, 3, 4]
+    recvbuf = Array{Union{Nothing, Particle}}(nothing, 100)
+    counter = 0
+    sleep_time = 1
 
-    myAllreduce!(vec, +, MPI.COMM_WORLD)
+    if rank == 0
+        while MPI.Wtime() - start_time < 10
+            MPI.Irecv!(recvbuf, MPI.COMM_WORLD; source=MPI.ANY_SOURCE)
+            counter += occupied(recvbuf)
+            empty!(recvbuf)
+            sleep(sleep_time)
+        end
+        print("Count: $(counter)")
+    else
+        sleep(2)
+        send_particle(0, 1, rank, comm)
+    end
+
+    MPI.Barrier(comm)
 end
 
 MPI.Init()
 
-@record your_mpi_code()
+# @record main()
+main()
 
 rank = MPI.Comm_rank(MPI.COMM_WORLD)
 # delayed printing
