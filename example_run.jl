@@ -1,53 +1,29 @@
 using MPI
 using MPITape
 
-struct Particle
-    x::Float32
-    y::Float32
-    z::Float32
-    message::Int32
-    rank::Int32
-    velocity::Float32
-    mass::Float64
+@enum Command begin
+    noCommand = 0
+    otherCommand = 1
 end
 
-function Particle(message, rank)
-    return Particle(
-        rand(Float32),
-        rand(Float32),
-        rand(Float32),
-        message,
-        rank,
-        rand(Float32),
-        rand(),
-    )
-end
-
-function send_particle(dest, message, from, comm::MPI.Comm)
-    MPI.Isend(Particle(message, from), comm; dest=dest)
+struct Message
+    command::Command
 end
 
 
-function myAllreduce!(sendrecv, op, comm::MPI.Comm)
-    rank = MPI.Comm_rank(comm)
-    
+function empty_message()
+    return Message(noCommand)
+end
 
-    buf2 = similar(sendrecv)
-
-    n = Int64(log2(size))
-    for i = n:-1:1
-        dest = rank ⊻ (2^i - 1)
-        MPI.Isend(sendrecv, comm; dest=dest)
-        MPI.Recv!(buf2, comm, source=dest)
-        sendrecv .= op(buf2, sendrecv)
-    end
+function send_message(command::Command, dest, comm::MPI.Comm)
+    MPI.Isend([Message(command)], comm; dest=dest)
 end
 
 
-function occupied(arr)
+function occupied(arr::Array{Message})
     counter = 0
-    for elem in arr
-        if elem !== nothing
+    for elem::Message in arr
+        if elem.command !== noCommand
             counter += 1
         end
     end
@@ -55,7 +31,7 @@ function occupied(arr)
 end
 
 #MPITape.new_overdub(myAllreduce!, (:rank, "all", :(Dict("data" => args[1], "mode" => "CYC"))))
-MPITape.new_overdub(send_particle, (:rank, :(args[1]), :(Dict("data" => "123", "mode" => "CYC"))))
+MPITape.new_overdub(send_message, (:rank, :(args[2]), :(Dict("command" => args[1]))))
 
 function main()
     start_time = MPI.Wtime()
@@ -64,21 +40,24 @@ function main()
     size = MPI.Comm_size(comm)
 
 
-    recvbuf = Array{Union{Nothing, Particle}}(nothing, 100)
-    counter = 0
+    recvbuf = [empty_message() for i in 1:size^2]
     sleep_time = 1
 
     if rank == 0
+        counter = 0
         while MPI.Wtime() - start_time < 10
             MPI.Irecv!(recvbuf, MPI.COMM_WORLD; source=MPI.ANY_SOURCE)
             counter += occupied(recvbuf)
-            empty!(recvbuf)
+            if recvbuf !== [empty_message() for i in 1:size^2]
+                recvbuf = [empty_message() for i in 1:size^2]
+            end
             sleep(sleep_time)
         end
-        print("Count: $(counter)")
+        println("Count: $(counter)")
     else
+        send_message(otherCommand, 0, comm)
         sleep(2)
-        send_particle(0, 1, rank, comm)
+        send_message(otherCommand, 0, comm)
     end
 
     MPI.Barrier(comm)
@@ -86,8 +65,8 @@ end
 
 MPI.Init()
 
-# @record main()
-main()
+@record main()
+#main()
 
 rank = MPI.Comm_rank(MPI.COMM_WORLD)
 # delayed printing
