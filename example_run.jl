@@ -16,7 +16,7 @@ function empty_message()
 end
 
 function send_message(command::Command, dest, comm::MPI.Comm)
-    MPI.Isend([Message(command)], comm; dest=dest)
+    MPI.Send([Message(command)], comm; dest=dest)
 end
 
 
@@ -41,17 +41,15 @@ function main()
 
 
     recvbuf = [empty_message() for i in 1:size^2]
-    sleep_time = 1
+    sleep_time = 0.1
 
     if rank == 0
         counter = 0
-        while MPI.Wtime() - start_time < 10
-            MPI.Irecv!(recvbuf, MPI.COMM_WORLD; source=MPI.ANY_SOURCE)
-            counter += occupied(recvbuf)
-            if recvbuf !== [empty_message() for i in 1:size^2]
-                recvbuf = [empty_message() for i in 1:size^2]
-            end
-            sleep(sleep_time)
+        while MPI.Wtime() - start_time < 40
+            test = MPI.Recv(Message, MPI.COMM_WORLD; source=MPI.ANY_SOURCE)
+            println(test)
+            println("--loooooop--")
+            #sleep(sleep_time)
         end
         println("Count: $(counter)")
     else
