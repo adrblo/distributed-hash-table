@@ -19,7 +19,7 @@ function hsucc(values::Array, x::Int)::Float16
     end
 end
 
-function hsucc(values::Array, x::Int)::Float16
+function hpred(values::Array, x::Int)::Float16
     """
     Return previous hash in Array
     """
