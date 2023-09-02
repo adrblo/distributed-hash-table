@@ -16,7 +16,7 @@ function empty_message()
 end
 
 function send_message(command::Command, dest, comm::MPI.Comm)
-    MPI.Send([Message(command)], comm; dest=dest)
+    MPI.Isend([Message(command)], comm; dest=dest)
 end
 
 
