@@ -46,16 +46,22 @@ function main()
     if rank == 0
         counter = 0
         while MPI.Wtime() - start_time < 40
-            test = MPI.Recv(Message, MPI.COMM_WORLD; source=MPI.ANY_SOURCE)
-            println(test)
-            println("--loooooop--")
-            #sleep(sleep_time)
+            if MPI.Iprobe(comm; source=MPI.ANY_SOURCE)
+                test = MPI.Recv(Message, comm; source=MPI.ANY_SOURCE)
+                if test.command !== noCommand
+                    counter += 1
+                end
+                println(test)
+                println("--loooooop--")
+            end
+            sleep(sleep_time)
         end
         println("Count: $(counter)")
     else
         send_message(otherCommand, 0, comm)
         sleep(2)
         send_message(otherCommand, 0, comm)
+
     end
 
     MPI.Barrier(comm)
