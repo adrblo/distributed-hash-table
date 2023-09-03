@@ -8,7 +8,7 @@ end
 function setup_events(rank, comm)
     # Events: (time in sec., ranks, function)
     events = [
-        Event(10, [1, 2], () -> (println("otherCommand", 3, comm))),
+        Event(10, [1, 2], () -> (3 ← () -> ())),
         Event(30, [1, 2], () -> (println("otherCommand", 2, comm))),
     ]
     

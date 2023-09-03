@@ -1,33 +1,34 @@
-using SHA
-
-function hash(x::Int)::Float16
-    # todo implement
-    return 0.20
+function h(x::Int)::Float64
+    return hash(x)/typemax(UInt64)
 end
 
-function hsucc(values::Array, x::Int)::Float16
+function g(x::Int)::Float64
+    return hash(x)/typemax(UInt64)
+end
+
+function hsucc(hvalues::Array, x::Int)::Float64
     """
     Return next hash in Array
     """
-    svalues = sort(values)
+    svalues = sort(hvalues)
     index = findfirst(==(x), svalues)
 
-    if (index == size(values, 1))
+    if (index == size(hvalues, 1))
         return 1
     else
         return index + 1
     end
 end
 
-function hpred(values::Array, x::Int)::Float16
+function hpred(hvalues::Array, x::Int)::Float64
     """
     Return previous hash in Array
     """
-    svalues = sort(values)
+    svalues = sort(hvalues)
     index = findfirst(==(x), svalues)
 
     if (index == 1)
-        return size(values, 1)
+        return size(hvalues, 1)
     else
         return index - 1
     end

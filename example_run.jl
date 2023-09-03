@@ -2,14 +2,14 @@ using MPI
 using MPITape
 
 include("mpi_operations.jl")
-
+include("operations.jl")
 
 function empty_message(rank)
-    return Message(noCommand, rank)
+    return Message(noCommand; from=rank)
 end
 
 function send_message(command::Command, rank, dest, comm::MPI.Comm)
-    MPI.Isend([Message(command, rank)], comm; dest=dest)
+    MPI.Isend(Message(command; from=rank), comm; dest=dest)
 end
 
 
@@ -19,10 +19,10 @@ struct Event
     func::Function
 end
 
-function setup_events(rank, comm)
+function setup_events(rank, comm, ←)
     # Events: (time in sec., ranks, function)
     events = [
-        Event(1, [1, 2], () -> (send_message(otherCommand, rank, 3, comm))),
+        Event(1, [1, 2], () -> (3 ← info(1))),
         Event(2, [1, 2], () -> (send_message(otherCommand, rank, 2, comm))),
     ]
     
@@ -49,12 +49,10 @@ function check_and_do_events!(events, done_events, time)
     end
 end
 
-function handleMessage(message::Message, rank)
-    # todo implement
-end
-
 #MPITape.new_overdub(myAllreduce!, (:rank, "all", :(Dict("data" => args[1], "mode" => "CYC"))))
 MPITape.new_overdub(send_message, (:rank, :(args[2]), :(Dict("command" => args[1]))))
+MPITape.new_overdub(info, (:rank, :rank, :(Dict("command" => ""))))
+MPITape.overdub_mpi()
 
 function example_run()
     sleep_time = 0.1 # checkup and refresh delay
@@ -64,13 +62,16 @@ function example_run()
     comm = MPI.COMM_WORLD
     rank = MPI.Comm_rank(MPI.COMM_WORLD)
     size = MPI.Comm_size(comm)
-    events, done_events = setup_events(rank, comm)
+
+    handle_message, ← = build_handle_message(rank, comm)
+    
+    events, done_events = setup_events(rank, comm, ←)
 
     while MPI.Wtime() - start_time < max_time
         if MPI.Iprobe(comm; source=MPI.ANY_SOURCE)
             message = MPI.Recv(Message, comm; source=MPI.ANY_SOURCE)
             if message.command !== noCommand
-                handleMessage(message, rank)
+                handle_message(message)
             end
         end
 
@@ -92,7 +93,7 @@ MPI.Init()
 rank = MPI.Comm_rank(MPI.COMM_WORLD)
 # delayed printing
 sleep(rank)
-MPITape.print_mytape()
+#MPITape.print_mytape()
 
 # save local tapes to disk
 MPITape.save()
@@ -102,7 +103,7 @@ if rank == 0 # on master
     # read all tapes and merge them into one
     tape_merged = MPITape.readall_and_merge()
     # print the merged tape
-    println(MPITape.json_merged(tape_merged))
+    MPITape.print_merged(tape_merged)
     MPITape.dump_merged(tape_merged, "merged.json")
     # plot the merged tape (beta)
     # display(MPITape.plot_sequence_merged(tape_merged))
