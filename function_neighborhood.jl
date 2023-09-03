@@ -1,9 +1,23 @@
 using Base
 
+# Idee:
+# ranks: Zahlenfolge 0..size <- x
+# Ranks mit Liste verbunden
+# id(x) = hash(x * mult)
+
+const mult = 10
+
+function id(x::Int)::UInt64
+    return hash((x + 1) * mult)
+end
+
 function neighborhood(x::Integer, size::Integer)
-    bin_length = length(digits(size, base = 2))
-    x_bin = last(bitstring(x), bin_length)
+    bin_length = Int(log2(typemax(UInt64)))
+    x_bin = last(bitstring(id(x)), bin_length)
     nbh_array = Int64[x-1, x+1]
+
+    ranks = range(0, size)
+    order = [id(x) for x in ranks]
 
     #Loop over Levels in Skip+ 
     for i in range(1, round(log(2, size))-1)
@@ -12,8 +26,8 @@ function neighborhood(x::Integer, size::Integer)
         max_el = -1
 
         #pred_0 und pred_1
-        pred_0 = pred(x, bin_length, "0", floor(Int, i))
-        pred_1 = pred(x, bin_length, "1", floor(Int, i))
+        pred_0 = pred(id(x), bin_length, "0", floor(Int, i), order)
+        pred_1 = pred(id(x), bin_length, "1", floor(Int, i), order)
         if(pred_0 !== nothing)
             if(!(pred_0 in nbh_array))
                 push!(nbh_array, pred_0)
@@ -32,8 +46,8 @@ function neighborhood(x::Integer, size::Integer)
         end
 
         #succ_0 und succ_1
-        succ_0 = succ(x, bin_length, "0", floor(Int,i), size)
-        succ_1 = succ(x, bin_length, "1", floor(Int,i), size)
+        succ_0 = succ(id(x), bin_length, "0", floor(Int,i), size, order)
+        succ_1 = succ(id(x), bin_length, "1", floor(Int,i), size, order)
         if(succ_0 !== nothing)
             if(!(succ_0 in nbh_array))
                 push!(nbh_array, succ_0)
@@ -72,27 +86,31 @@ function neighborhood(x::Integer, size::Integer)
 end
 
 #Calculates pred_i(x,b) for Node x in Level i with extension b for b=0 or b=1
-function pred(x::Integer, length::Integer, extension::String, level::Integer)
+function pred(x, length::Integer, extension::String, level::Integer, order)
+    sorder = sort(order)
     x_bin = last(bitstring(x), length)
-    x_ext = SubString(x_bin, 1, floor(Int,level))*extension     
-    for j=x-1:-1:0
-        j_bin = last(bitstring(j), length)
+    x_ext = SubString(x_bin, 1, floor(Int,level))*extension
+    x_key = findfirst(e -> e == x,  sorder)
+    for j=x_key-1:-1:1
+        j_bin = last(bitstring(id(j)), length)
         comp = SubString(j_bin, 1, floor(Int,level+1))
         if(comp == x_ext)
-            return j
+            return findfirst(e -> e == sorder[j],  order)
         end
     end
 end
 
 #Calculates succ_i(x,b) for Node x in Level i with extension b for b=0 or b=1
-function succ(x::Integer, length::Integer, extension::String, level::Integer, size::Integer)
+function succ(x, length::Integer, extension::String, level::Integer, size::Integer, order)
+    sorder = sort(order)
     x_bin = last(bitstring(x), length)
-    x_ext = SubString(x_bin, 1, floor(Int,level))*extension     
-    for j in range(x+1, size)
+    x_ext = SubString(x_bin, 1, floor(Int,level))*extension
+    x_key = findfirst(e -> e == x,  sorder)
+    for j in range(x_key+1, size)
         j_bin = last(bitstring(j), length)
         comp = SubString(j_bin, 1, floor(Int,level+1))
         if(comp == x_ext)
-            return j
+            return findfirst(e -> e == sorder[j],  order)
         end
     end
 end
