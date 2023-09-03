@@ -1,3 +1,11 @@
+function ∇(message, node, comm)
+    MPI.Isend(message, comm; dest=node)
+end
+
+function ∘(handle_message, message)
+    handle_message(message)
+end
+
 function build_handle_message(rank, comm)
     message_map = Dict(
             _info => (content) -> Message(cinfo; data=content),
@@ -16,9 +24,9 @@ function build_handle_message(rank, comm)
     ←(node::Int, op::Tuple) = begin
         message = message_map[op[1]](op[2]...)
         if node == rank
-            handle_message(message)
+            ∘(handle_message, message)
         else
-            MPI.Isend(message, comm; dest=node)
+            ∇(message, node, comm)
         end
     end
 

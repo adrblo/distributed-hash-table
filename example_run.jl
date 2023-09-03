@@ -12,7 +12,6 @@ function send_message(command::Command, rank, dest, comm::MPI.Comm)
     MPI.Isend(Message(command; from=rank), comm; dest=dest)
 end
 
-
 struct Event
     start::Int
     ranks::Vector{Int}
@@ -23,7 +22,7 @@ function setup_events(rank, comm, ←)
     # Events: (time in sec., ranks, function)
     events = [
         Event(1, [1, 2], () -> (3 ← info(1))),
-        Event(2, [1, 2], () -> (send_message(otherCommand, rank, 2, comm))),
+        Event(2, [1, 2], () -> (2 ← info(1))),
     ]
     
     rank_events = []
@@ -51,12 +50,13 @@ end
 
 #MPITape.new_overdub(myAllreduce!, (:rank, "all", :(Dict("data" => args[1], "mode" => "CYC"))))
 MPITape.new_overdub(send_message, (:rank, :(args[2]), :(Dict("command" => args[1]))))
-MPITape.new_overdub(info, (:rank, :rank, :(Dict("command" => ""))))
-MPITape.overdub_mpi()
+MPITape.new_overdub(∇, (:rank, :(args[2]), :(Dict("command" => args[1].command))))
+MPITape.new_overdub(∘, (:rank, :rank, :(Dict("command" => args[2].command))))
+#MPITape.overdub_mpi()
 
 function example_run()
     sleep_time = 0.1 # checkup and refresh delay
-    max_time = 10 # maximum time of run
+    max_time = 15 # maximum time of run
 
     start_time = MPI.Wtime()
     comm = MPI.COMM_WORLD
@@ -64,7 +64,7 @@ function example_run()
     size = MPI.Comm_size(comm)
 
     handle_message, ← = build_handle_message(rank, comm)
-    
+
     events, done_events = setup_events(rank, comm, ←)
 
     while MPI.Wtime() - start_time < max_time
