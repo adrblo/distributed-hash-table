@@ -5,7 +5,7 @@
 Enter Packagemode in Julia REPL and add MPITape Fork
 
 ```
-] add https://github.com/adrblo/MPITape.jl.git
+] add https://github.com/adrblo/MPITape.jl.git#custom-overdub
 ] add MPI
 ```
 
