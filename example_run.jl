@@ -64,7 +64,8 @@ function example_run()
     rank = MPI.Comm_rank(MPI.COMM_WORLD)
     size = MPI.Comm_size(comm)
 
-    handle_message, ← = build_handle_message(rank, comm)
+    p = Process(rank)
+    handle_message, ← = build_handle_message(rank, comm, p)
 
     events, done_events = setup_events(rank, comm, ←)
 

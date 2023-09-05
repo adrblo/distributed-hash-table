@@ -27,7 +27,11 @@ end
 
 mutable struct Process
     self::Int
-    left::Int
-    right::Int
+    left::Union{Int, Nothing}
+    right::Union{Int, Nothing}
     neighbors::Array{Int}
+end
+
+function Process(rank::Int)
+    return Process(rank, nothing, nothing, [])
 end
