@@ -10,6 +10,7 @@
     lookup = 103
     join = 104
     leave = 105
+    clinearize = 106
 end
 
 struct Message
@@ -24,3 +25,9 @@ function Message(command::Command; from::Int=0, node=0, data=0, success=false)
     return Message(command, from, node, data, success)
 end
 
+mutable struct Process
+    self::Int
+    left::Int
+    right::Int
+    neighbors::Array{Int}
+end

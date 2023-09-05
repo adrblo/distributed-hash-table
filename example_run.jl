@@ -23,6 +23,7 @@ function setup_events(rank, comm, ←)
     events = [
         Event(1, [1, 2], () -> (3 ← info(1))),
         Event(2, [1, 2], () -> (2 ← info(1))),
+        Event(3, [3], () -> (2 ← linearize(3))),
     ]
     
     rank_events = []
@@ -55,7 +56,7 @@ MPITape.new_overdub(∘, (:rank, :rank, :(Dict("command" => args[2].command))))
 #MPITape.overdub_mpi()
 
 function example_run()
-    sleep_time = 0.1 # checkup and refresh delay
+    sleep_time = 0.0001 # checkup and refresh delay
     max_time = 15 # maximum time of run
 
     start_time = MPI.Wtime()

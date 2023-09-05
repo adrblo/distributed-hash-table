@@ -9,16 +9,18 @@ end
 function build_handle_message(rank, comm)
     message_map = Dict(
             _info => (content) -> Message(cinfo; data=content),
+            _linearize => (node) -> Message(clinearize; node=node),
         )
 
     map_from_message = Dict(
-            noCommand => (f, n, d, s) -> nothing,
-            otherCommand => (f, n, d, s) -> nothing,
-            cinfo => (f, n, d, s) -> _info(d),
+            noCommand => (f, n, d, s, self) -> nothing,
+            otherCommand => (f, n, d, s, self) -> nothing,
+            cinfo => (f, n, d, s, self) -> _info(d, self),
+            clinearize => (f, n, d, s, self) -> _linearize(n, self),
         )
 
     function handle_message(message::Message)
-        map_from_message[message.command](message.from, message.node, message.data, message.success)
+        map_from_message[message.command](message.from, message.node, message.data, message.success, rank)
     end
 
     ←(node::Int, op::Tuple) = begin
@@ -41,8 +43,8 @@ function _route(node::Int)
 end
 
 
-function _info(content::Int)
-    println(content)
+function _info(content::Int, self)
+    println(self, ": ", content)
 end
 
 
@@ -58,4 +60,14 @@ end
 
 function searchX(x::Float16)
     return (_info, (x, from, success))
+end
+
+function _linearize(node, self)
+    print("Hallo ich bin: ", self, "Ich linearise jetzt mal ", node)
+    # ich gebe dich an meinen Nachbarn
+    p.left ← linearize(node)
+end
+
+function linearize(node)
+    return (_linearize, (node,))
 end
