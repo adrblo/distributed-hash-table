@@ -21,9 +21,9 @@ end
 function setup_events(rank, comm, ←)
     # Events: (time in sec., ranks, function)
     events = [
-        Event(1, [1, 2], () -> (3 ← info(1))),
-        Event(2, [1, 2], () -> (2 ← info(1))),
-        Event(3, [3], () -> (2 ← linearize(3))),
+        #Event(1, [1, 2], () -> (3 ← info(1))),
+        #Event(2, [1, 2], () -> (2 ← info(1))),
+        Event(3, [0], () -> (1 ← linearize(0))),
     ]
     
     rank_events = []
@@ -53,6 +53,7 @@ end
 MPITape.new_overdub(send_message, (:rank, :(args[2]), :(Dict("command" => args[1]))))
 MPITape.new_overdub(∇, (:rank, :(args[2]), :(Dict("command" => args[1].command))))
 MPITape.new_overdub(∘, (:rank, :rank, :(Dict("command" => args[2].command))))
+MPITape.new_overdub(linearize, (:rank, :rank, :(Dict("node" => args[1]))))
 #MPITape.overdub_mpi()
 
 function example_run()

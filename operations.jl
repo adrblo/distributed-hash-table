@@ -13,14 +13,14 @@ function build_handle_message(rank, comm, p)
         )
 
     map_from_message = Dict(
-            noCommand => (f, n, d, s, p) -> nothing,
-            otherCommand => (f, n, d, s, p) -> nothing,
-            cinfo => (f, n, d, s, p) -> _info(p, d),
-            clinearize => (f, n, d, s, p) -> _linearize(p, n),
+            noCommand => (f, n, d, s, p, ←) -> nothing,
+            otherCommand => (f, n, d, s, p, ←) -> nothing,
+            cinfo => (f, n, d, s, p, ←) -> _info(p, d),
+            clinearize => (f, n, d, s, p, ←) -> _linearize(p, n, ←),
         )
 
     function handle_message(message::Message)
-        map_from_message[message.command](message.from, message.node, message.data, message.success, p)
+        map_from_message[message.command](message.from, message.node, message.data, message.success, p, ←)
     end
 
     ←(node::Int, op::Tuple) = begin
@@ -62,8 +62,13 @@ function searchX(x::Float16)
     return (_info, (x, from, success))
 end
 
-function _linearize(p::Process, node)
-    println("Hallo ich bin: ", p.self, " Ich linearise jetzt mal ", node)
+function _linearize(p::Process, node, ←)
+    if p.self == 1
+        2 ← linearize(0)
+        println("redirected")
+    else 
+        println("Hallo ich bin: ", p.self, " Ich linearise jetzt mal ", node)
+    end
 end
 
 function linearize(node)
