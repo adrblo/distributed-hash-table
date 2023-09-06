@@ -11,21 +11,26 @@ function id(x::Int)::UInt64
     return hash((x + 1) * mult)
 end
 
-function neighbors(self::Int, size::Int)
+function props(size::Int)
     nodes::Vector{Int} = range(0, size-1)
     ids::Vector{String} = [bitstring(id(x)) for x in nodes]
     perm_ids = sortperm(ids)
     perm_ids⁻¹ = sortperm(perm_ids)
 
+    return nodes, ids, perm_ids, perm_ids⁻¹
+end
+
+function neighbors(self::Int, size::Int)
     # ⇒ ids[perm_ids] := sorted array of ids
+    nodes, ids, perm_ids, perm_ids⁻¹ = props(size)
     context = (nodes, ids, perm_ids, perm_ids⁻¹)
     
     # debug
-    for index in 1:size
-        println(string("Pos ", index, " Node: ", nodes[perm_ids][index], " Hash: ", ids[perm_ids][index]))
-    end
+    #for index in 1:size
+    #    println(string("Pos ", index, " Node: ", nodes[perm_ids][index], " Hash: ", ids[perm_ids][index]))
+    #end
 
-    N = []
+    N = Set()
 
     left = predᵢ(nothing, 0, self, context...)
     right = succᵢ(nothing, 0, self, context...)
@@ -37,9 +42,26 @@ function neighbors(self::Int, size::Int)
     if right !== nothing
         push!(N, right)
     end
-    
 
-    return rangeᵢ(2, self, context...)
+    for i in 0:length(ids[1])
+        r = rangeᵢ(i, self, context...)
+
+        prefix = bitstring(id(self))[1:i]
+
+        for j in perm_ids⁻¹[r[1] + 1]:perm_ids⁻¹[r[2] + 1]
+            idj = ids[perm_ids][j]
+            if startswith(idj, prefix)
+                push!(N, nodes[perm_ids][j])
+            end
+        end
+    end
+
+    delete!(N, self)
+    Narray = collect(N)
+    nids = [bitstring(id(x)) for x in Narray]
+    perm_ids = sortperm(nids)
+
+    return Narray[perm_ids]
 end
 
 function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, perm_ids⁻¹)::Union{Int, Nothing}
@@ -92,5 +114,3 @@ function rangeᵢ(i::Union{Int, Nothing}, x::Int, nodes, ids, perm_ids, perm_ids
         nodes[perm_ids][max(perm_ids⁻¹[succᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹) + 1], perm_ids⁻¹[succᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹) + 1])]
     )
 end
-
-println(neighbors(7, 24))
