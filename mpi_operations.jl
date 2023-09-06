@@ -32,6 +32,12 @@ mutable struct Process
     neighbors::Array{Int}
 end
 
-function Process(rank::Int)
-    return Process(rank, nothing, nothing, [])
+function Process(rank::Int, size::Int)
+    context = props(size)
+    left = predᵢ(nothing, 0, rank, context...)
+    right = succᵢ(nothing, 0, rank, context...)
+
+    N = neighbors(rank, size)
+
+    return Process(rank, left, right, N)
 end

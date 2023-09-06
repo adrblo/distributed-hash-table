@@ -1,6 +1,7 @@
 using MPI
 using MPITape
 
+include("function_neighborhood.jl")
 include("mpi_operations.jl")
 include("operations.jl")
 
@@ -58,14 +59,14 @@ MPITape.new_overdub(linearize, (:rank, :rank, :(Dict("node" => args[1]))))
 
 function example_run()
     sleep_time = 0.0001 # checkup and refresh delay
-    max_time = 15 # maximum time of run
+    max_time = 60 # maximum time of run
 
     start_time = MPI.Wtime()
     comm = MPI.COMM_WORLD
     rank = MPI.Comm_rank(MPI.COMM_WORLD)
     size = MPI.Comm_size(comm)
 
-    p = Process(rank)
+    p = Process(rank, size)
     handle_message, ← = build_handle_message(rank, comm, p)
 
     events, done_events = setup_events(rank, comm, ←)
