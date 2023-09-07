@@ -7,3 +7,4 @@ MPITape.jl
 *.tape
 *.json
 
+*.log

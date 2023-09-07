@@ -1,5 +1,5 @@
 using MPI
-using MPITape
+using Logging, LoggingExtras
 
 include("function_neighborhood.jl")
 include("mpi_operations.jl")
@@ -50,23 +50,21 @@ function check_and_do_events!(events, done_events, time)
     end
 end
 
-#MPITape.new_overdub(myAllreduce!, (:rank, "all", :(Dict("data" => args[1], "mode" => "CYC"))))
-MPITape.new_overdub(send_message, (:rank, :(args[2]), :(Dict("command" => args[1]))))
-MPITape.new_overdub(∇, (:rank, :(args[2]), :(Dict("command" => args[1].command))))
-MPITape.new_overdub(∘, (:rank, :rank, :(Dict("command" => args[2].command))))
-MPITape.new_overdub(linearize, (:rank, :rank, :(Dict("node" => args[1]))))
-#MPITape.overdub_mpi()
 
 function example_run()
     sleep_time = 0.0001 # checkup and refresh delay
-    max_time = 60 # maximum time of run
+    max_time = 5 # maximum time of run
 
     start_time = MPI.Wtime()
     comm = MPI.COMM_WORLD
     rank = MPI.Comm_rank(MPI.COMM_WORLD)
     size = MPI.Comm_size(comm)
 
+    logger = SimpleLogger(open("rank_" * string(rank) * ".log", "w+"))
+    global_logger(logger)
+
     p = Process(rank, size)
+    @info "Process" p
     handle_message, ← = build_handle_message(rank, comm, p)
 
     events, done_events = setup_events(rank, comm, ←)
@@ -75,6 +73,7 @@ function example_run()
         if MPI.Iprobe(comm; source=MPI.ANY_SOURCE)
             message = MPI.Recv(Message, comm; source=MPI.ANY_SOURCE)
             if message.command !== noCommand
+                @info "Message: Incoming" message
                 handle_message(message)
             end
         end
@@ -91,27 +90,10 @@ end
 
 MPI.Init()
 
-@record example_run()
-#example_run
+example_run()
 
-rank = MPI.Comm_rank(MPI.COMM_WORLD)
-# delayed printing
-sleep(rank)
-#MPITape.print_mytape()
-
-# save local tapes to disk
-MPITape.save()
 
 MPI.Barrier(MPI.COMM_WORLD)
-if rank == 0 # on master
-    # read all tapes and merge them into one
-    tape_merged = MPITape.readall_and_merge()
-    # print the merged tape
-    MPITape.print_merged(tape_merged)
-    MPITape.dump_merged(tape_merged, "merged.json")
-    # plot the merged tape (beta)
-    # display(MPITape.plot_sequence_merged(tape_merged))
-    # MPITape.plot_merged(tape_merged)
-end
+
 
 MPI.Finalize()

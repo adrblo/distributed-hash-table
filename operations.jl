@@ -21,10 +21,16 @@ function build_handle_message(rank, comm, p)
 
     function handle_message(message::Message)
         map_from_message[message.command](message.from, message.node, message.data, message.success, p, ←)
+        @info string("Call_self: " * string(rank) * " ← " * string(message.command) * " from " * string(rank)) message
     end
 
-    ←(node::Int, op::Tuple) = begin
+    ←(node::Union{Int, Nothing}, op::Tuple) = begin
+        if node === nothing
+            return
+        end
+
         message = message_map[op[1]](op[2]...)
+        @info string("Call: " * string(node) * " ← " * string(op[1]) * " from " * string(rank)) node, message.command, op[2]
         if node == rank
             ∘(handle_message, message)
         else
@@ -63,12 +69,7 @@ function searchX(x::Float16)
 end
 
 function _linearize(p::Process, node, ←)
-    if p.self == 1
-        2 ← linearize(0)
-        println("redirected")
-    else 
-        println("Hallo ich bin: ", p.self, " Ich linearise jetzt mal ", node)
-    end
+    p.left ← linearize(0)
 end
 
 function linearize(node)
