@@ -10,19 +10,23 @@ function build_handle_message(rank, comm, p)
     message_map = Dict(
             _info => (content) -> Message(command_info; data=content),
             _linearize => (node) -> Message(command_linearize; node=node),
-            _trace => (node, from) -> Message(command_trace; node=node, from=from)
+            _trace => (node, from) -> Message(command_trace; node=node, from=from),
+            _search => (data_hash, from) -> Message(request_search; data_hash=data_hash, from=from),
+            _callback_search => (data_hash, from, node) -> Message(response_search; data_hash=data_hash, from=from, node=node)
         )
 
     map_from_message = Dict(
-            noCommand => (f, n, d, s, p, ←) -> nothing,
-            otherCommand => (f, n, d, s, p, ←) -> nothing,
-            command_info => (f, n, d, s, p, ←) -> _info(p, d),
-            command_linearize => (f, n, d, s, p, ←) -> _linearize(p, n, ←),
-            command_trace => (f, n, d, s, p, ←) -> _trace(p, n, ←, f)
+            noCommand => (f, n, d, s, dh, p, ←)-> nothing,
+            otherCommand => (f, n, d, s, dh, p, ←)-> nothing,
+            command_info => (f, n, d, s, dh, p, ←)-> _info(p, d),
+            command_linearize => (f, n, d, s, dh, p, ←) -> _linearize(p, n, ←),
+            command_trace => (f, n, d, s, dh, p, ←) -> _trace(p, n, ←, f),
+            request_search => (f, n, d, s, dh, p, ←) -> _search(p, ←, f, dh),
+            response_search => (f, n, d, s, dh, p, ←) -> _callback_search(p, ←, f, dh, n),
         )
 
     function handle_message(message::Message)
-        map_from_message[message.command](message.from, message.node, message.data, message.success, p, ←)
+        map_from_message[message.command](message.from, message.node, message.data, message.success, message.data_hash, p, ←)
         @info string("Call_self: " * string(rank) * " ← " * string(message.command) * " from " * string(rank)) message
     end
 
@@ -48,13 +52,41 @@ function _search(p, ←, from, data_hash::Float64)
     left_hash = h(p.left)
     right_hash = h(p.right)
     if !(data_hash >= left_hash && data_hash <= right_hash)
-        # greedy routing
+        r = hash_route(p.self, p.neighbors, data_hash)
+        @info "Search" data_hash from r self_hash
+        r ← search(data_hash, from)
+        return
     else
         if data_hash < self_hash
+            @info "Search near" data_hash from self_hash
             p.left ← search(data_hash, from)
+        else
+            # search is at correct node
+            @info "Seach ARRIVED" data_hash from self_hash
+
+            # callback
+            p.self ← callback_search(data_hash, from, p.self)
         end
-        return
     end
+end
+
+function search(data_hash, from)
+    return (_search, (data_hash, from))
+end
+
+function _callback_search(p, ←, from, data_hash::Float64, node)
+    if p.self == from
+        # do something
+        @info "CallbackSearch ARRIVED" data_hash from node
+    else
+        r = route(p.self, p.neighbors, from)
+        @info "CallbackSearch" data_hash r from node
+        r ← callback_search(data_hash, from, node)
+    end
+end
+
+function callback_search(data_hash, from, node)
+    return (_callback_search, (data_hash, from, node))
 end
 
 function _trace(p::Process, node, ←, from)
@@ -80,16 +112,6 @@ end
 
 function info(content::Int)
     return (_info, (content,))
-end
-
-
-function _search(x::Float16, from, success)
-
-end
-
-
-function searchX(x::Float16)
-    return (_info, (x, from, success))
 end
 
 function _linearize(p::Process, node, ←)

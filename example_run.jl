@@ -23,12 +23,7 @@ end
 function setup_events(rank, comm, ←)
     # Events: (time in sec., ranks, function)
     events = [
-        #Event(1, [1, 2], () -> (3 ← info(1))),
-        #Event(2, [1, 2], () -> (2 ← info(1))),
-        #Event(3, [62], () -> (62 ← linearize(0))),
-        Event(0, [62], () -> (rank ← trace(28, rank))),
-        Event(0, [28], () -> (rank ← trace(27, rank))),
-        Event(0, [28], () -> (rank ← trace(33, rank)))
+        Event(0, [39], () -> (rank ← search(g(100), rank))),
     ]
     
     rank_events = []

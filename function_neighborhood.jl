@@ -21,10 +21,19 @@ function props(size::Int)
     return nodes, ids, perm_ids, perm_ids⁻¹
 end
 
+function hash_props(nodes)
+    ids::Vector{Float64} = [h(x) for x in nodes]
+    perm_ids = sortperm(ids)
+    perm_ids⁻¹ = sortperm(perm_ids)
+
+    return ids, perm_ids, perm_ids⁻¹
+end
+
 function neighbors(self::Int, size::Int)
     # ⇒ ids[perm_ids] := sorted array of ids
     nodes, ids, perm_ids, perm_ids⁻¹ = props(size)
-    context = (nodes, ids, perm_ids, perm_ids⁻¹)
+    idsh, permh, permh⁻¹ = hash_props(nodes)
+    context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
 
     N = Set()
 
@@ -60,17 +69,17 @@ function neighbors(self::Int, size::Int)
     return Narray[perm_ids]
 end
 
-function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, perm_ids⁻¹)::Union{Int, Nothing}
+function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)::Union{Int, Nothing}
     """
     Returns node
 
     x+1 := Index of node x
     """
     if i === nothing
-        if x == nodes[perm_ids][1]
-            return nothing
+        if x == nodes[permh][1]
+            return nodes[permh][size(nodes, 1)]
         else 
-            return nodes[perm_ids][perm_ids⁻¹[x+1] - 1]
+            return nodes[permh][permh⁻¹[x+1] - 1]
         end
     end
 
@@ -82,17 +91,17 @@ function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
     return nodes[perm_ids][1]
 end
 
-function succᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, perm_ids⁻¹)::Union{Int, Nothing}
+function succᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)::Union{Int, Nothing}
     """
     Returns node
 
     x+1 := Index of node x
     """
     if i === nothing
-        if x == nodes[perm_ids][size(nodes, 1)]
-            return nothing
-        else 
-            return nodes[perm_ids][perm_ids⁻¹[x+1] + 1]
+        if x == nodes[permh][size(nodes, 1)]
+            return nodes[permh][1]
+        else
+            return nodes[permh][permh⁻¹[x+1] + 1]
         end
     end
 
@@ -104,9 +113,9 @@ function succᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
     return nodes[perm_ids][size(nodes, 1)]
 end
 
-function rangeᵢ(i::Union{Int, Nothing}, x::Int, nodes, ids, perm_ids, perm_ids⁻¹)::Tuple{Int, Int}
+function rangeᵢ(i::Union{Int, Nothing}, x::Int, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)::Tuple{Int, Int}
     return (
-        nodes[perm_ids][min(perm_ids⁻¹[predᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹) + 1], perm_ids⁻¹[predᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹) + 1])],
-        nodes[perm_ids][max(perm_ids⁻¹[succᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹) + 1], perm_ids⁻¹[succᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹) + 1])]
+        nodes[perm_ids][min(perm_ids⁻¹[predᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1], perm_ids⁻¹[predᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1])],
+        nodes[perm_ids][max(perm_ids⁻¹[succᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1], perm_ids⁻¹[succᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1])]
     )
 end

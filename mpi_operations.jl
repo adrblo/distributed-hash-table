@@ -20,10 +20,11 @@ struct Message
     node::Int
     data::Int
     success::Bool
+    data_hash::Float64
 end
 
-function Message(command::Command; from::Int=0, node=0, data=0, success=false)
-    return Message(command, from, node, data, success)
+function Message(command::Command; from::Int=0, node=0, data=0, success=false, data_hash=0.0)
+    return Message(command, from, node, data, success, data_hash)
 end
 
 mutable struct Process
@@ -35,7 +36,9 @@ mutable struct Process
 end
 
 function Process(rank::Int, size::Int)
-    context = props(size)
+    nodes, ids, perm_ids, perm_ids⁻¹ = props(size)
+    idsh, permh, permh⁻¹ = hash_props(nodes)
+    context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
     left = predᵢ(nothing, 0, rank, context...)
     right = succᵢ(nothing, 0, rank, context...)
 
