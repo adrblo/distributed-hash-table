@@ -1,16 +1,17 @@
 @enum Command begin
     noCommand = 0
     otherCommand = 1
-    trace = 2
-    cinfo = 3
+    command_trace = 2
+    command_info = 3
 
-    search = 100
+    request_search = 100
+    response_search = 200
     insert = 101
     delete = 102
     lookup = 103
     join = 104
     leave = 105
-    clinearize = 106
+    command_linearize = 106
 end
 
 struct Message
@@ -30,6 +31,7 @@ mutable struct Process
     left::Union{Int, Nothing}
     right::Union{Int, Nothing}
     neighbors::Array{Int}
+    storage::Array{Int}
 end
 
 function Process(rank::Int, size::Int)
@@ -39,5 +41,7 @@ function Process(rank::Int, size::Int)
 
     N = neighbors(rank, size)
 
-    return Process(rank, left, right, N)
+    storage = []
+
+    return Process(rank, left, right, N, storage)
 end

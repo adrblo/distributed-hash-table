@@ -2,6 +2,7 @@ using MPI
 using Logging, LoggingExtras
 
 include("function_neighborhood.jl")
+include("methods.jl")
 include("mpi_operations.jl")
 include("operations.jl")
 
@@ -24,7 +25,10 @@ function setup_events(rank, comm, ←)
     events = [
         #Event(1, [1, 2], () -> (3 ← info(1))),
         #Event(2, [1, 2], () -> (2 ← info(1))),
-        Event(3, [0], () -> (1 ← linearize(0))),
+        #Event(3, [62], () -> (62 ← linearize(0))),
+        Event(0, [62], () -> (rank ← trace(28, rank))),
+        Event(0, [28], () -> (rank ← trace(27, rank))),
+        Event(0, [28], () -> (rank ← trace(33, rank)))
     ]
     
     rank_events = []
@@ -53,7 +57,7 @@ end
 
 function example_run()
     sleep_time = 0.0001 # checkup and refresh delay
-    max_time = 5 # maximum time of run
+    max_time = 15 # maximum time of run
 
     start_time = MPI.Wtime()
     comm = MPI.COMM_WORLD

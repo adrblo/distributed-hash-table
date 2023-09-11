@@ -25,11 +25,6 @@ function neighbors(self::Int, size::Int)
     # ⇒ ids[perm_ids] := sorted array of ids
     nodes, ids, perm_ids, perm_ids⁻¹ = props(size)
     context = (nodes, ids, perm_ids, perm_ids⁻¹)
-    
-    # debug
-    for index in 1:size
-        @info "Graph" (string("Pos ", index, " Node: ", nodes[perm_ids][index], " Hash: ", ids[perm_ids][index]))
-    end
 
     N = Set()
 

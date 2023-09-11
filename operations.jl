@@ -8,15 +8,17 @@ end
 
 function build_handle_message(rank, comm, p)
     message_map = Dict(
-            _info => (content) -> Message(cinfo; data=content),
-            _linearize => (node) -> Message(clinearize; node=node),
+            _info => (content) -> Message(command_info; data=content),
+            _linearize => (node) -> Message(command_linearize; node=node),
+            _trace => (node, from) -> Message(command_trace; node=node, from=from)
         )
 
     map_from_message = Dict(
             noCommand => (f, n, d, s, p, ←) -> nothing,
             otherCommand => (f, n, d, s, p, ←) -> nothing,
-            cinfo => (f, n, d, s, p, ←) -> _info(p, d),
-            clinearize => (f, n, d, s, p, ←) -> _linearize(p, n, ←),
+            command_info => (f, n, d, s, p, ←) -> _info(p, d),
+            command_linearize => (f, n, d, s, p, ←) -> _linearize(p, n, ←),
+            command_trace => (f, n, d, s, p, ←) -> _trace(p, n, ←, f)
         )
 
     function handle_message(message::Message)
@@ -41,11 +43,24 @@ function build_handle_message(rank, comm, p)
     return handle_message, ←
 end
 
-function _route(node::Int)
-    """
-    Returns the nearest node in routing strategy
-    """
-    return node+1
+function _search(p, ←, from, data_hash::Float64)
+    self_hash = h(p.self)
+    
+end
+
+function _trace(p::Process, node, ←, from)
+    if node == p.self
+        @info "Trace ARRIVED" from
+        return
+    else
+        r = route(p.self, p.neighbors, node)
+        @info "Trace" node from r
+        r ← trace(node, from)
+    end
+end
+
+function trace(node::Int, from::Int)
+    (_trace, (node, from))
 end
 
 
