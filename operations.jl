@@ -45,7 +45,16 @@ end
 
 function _search(p, ←, from, data_hash::Float64)
     self_hash = h(p.self)
-    
+    left_hash = h(p.left)
+    right_hash = h(p.right)
+    if !(data_hash >= left_hash && data_hash <= right_hash)
+        # greedy routing
+    else
+        if data_hash < self_hash
+            p.left ← search(data_hash, from)
+        end
+        return
+    end
 end
 
 function _trace(p::Process, node, ←, from)
