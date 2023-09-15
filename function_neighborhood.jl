@@ -6,10 +6,10 @@ using Logging
 # Ranks mit Liste verbunden
 # id(x) = hash(x * mult)
 
-const mult = 10
+const mult = 2500
 
 function id(x::Int)::UInt64
-    return hash((x + 1) * mult)
+    return hash(x)
 end
 
 function props(size::Int)

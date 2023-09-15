@@ -12,17 +12,23 @@ function build_handle_message(rank, comm, p)
             _linearize => (node) -> Message(command_linearize; node=node),
             _trace => (node, from) -> Message(command_trace; node=node, from=from),
             _search => (data_hash, from) -> Message(request_search; data_hash=data_hash, from=from),
-            _callback_search => (data_hash, from, node) -> Message(response_search; data_hash=data_hash, from=from, node=node)
+            _callback_search => (data_hash, from, node) -> Message(response_search; data_hash=data_hash, from=from, node=node),
+            _lookup => (data_key, from) -> Message(lookup_element; data_key=data_key, from=from),
+            _insert => (data, from) -> Message(insert_element; data=data, from=from),
+            _delete => (data_key, from) -> Message(delete_element; data_key=data_key, from=from)
         )
 
     map_from_message = Dict(
-            noCommand => (f, n, d, s, dh, p, ←)-> nothing,
-            otherCommand => (f, n, d, s, dh, p, ←)-> nothing,
-            command_info => (f, n, d, s, dh, p, ←)-> _info(p, d),
-            command_linearize => (f, n, d, s, dh, p, ←) -> _linearize(p, n, ←),
-            command_trace => (f, n, d, s, dh, p, ←) -> _trace(p, n, ←, f),
-            request_search => (f, n, d, s, dh, p, ←) -> _search(p, ←, f, dh),
-            response_search => (f, n, d, s, dh, p, ←) -> _callback_search(p, ←, f, dh, n),
+            noCommand => (f, n, d, s, dh, dk, p, ←)-> nothing,
+            otherCommand => (f, n, d, s, dh, dk, p, ←)-> nothing,
+            command_info => (f, n, d, s, dh, dk, p, ←)-> _info(p, d),
+            command_linearize => (f, n, d, s, dh, dk, p, ←) -> _linearize(p, n, ←),
+            command_trace => (f, n, d, s, dh, dk, p, ←) -> _trace(p, n, ←, f),
+            request_search => (f, n, d, s, dh, dk, p, ←) -> _search(p, ←, f, dh),
+            response_search => (f, n, d, s, dh, dk, p, ←) -> _callback_search(p, ←, f, dh, n),
+            lookup_element => (f, n, d, s, dh, dk, p, ←) -> _lookup(p, ←, f, dk),
+            insert_element => (f, n, d, s, dh, dk, p, ←) -> _insert(p, ←, f, d),
+            delete_element => (f, n, d, s, dh, dk, p, ←) -> _delete(p, ←, dk, f),
         )
 
     function handle_message(message::Message)
@@ -87,6 +93,40 @@ end
 
 function callback_search(data_hash, from, node)
     return (_callback_search, (data_hash, from, node))
+end
+
+function _lookup(p, ←, from, data_key)
+    data_hash = g(data_key)
+    p.self ← search(data_hash, from)
+    #in Zielspeicher nach Datum suchen
+    return
+end
+
+function lookup(data_key, from)
+    return (_lookup, (data_key, from))
+end
+
+function _insert(p, ←, from, data)
+    #data=data_key?
+    data_hash = g(data)
+    p.self ← search(data_hash, from)
+    #in Zielspeicher Datum einfuegen
+    return
+end
+
+function insert(data, from)
+    return (_insert, (data, from))
+end
+
+function _delete(p, ←, data_key, from)
+    data_hash = g(data_key)
+    p.self ← search(data_hash, from)
+    #in Zielspeicher Datum loeschen
+    return
+end
+
+function delete(data_key, from)
+    return (_delete, (data_key, from))
 end
 
 function _trace(p::Process, node, ←, from)

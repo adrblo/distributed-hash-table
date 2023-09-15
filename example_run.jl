@@ -23,7 +23,7 @@ end
 function setup_events(rank, comm, ←)
     # Events: (time in sec., ranks, function)
     events = [
-        Event(0, [39], () -> (rank ← search(g(100), rank))),
+        Event(0, [17], () -> (rank ← search(g(100), rank))),
     ]
     
     rank_events = []

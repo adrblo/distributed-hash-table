@@ -6,9 +6,9 @@
 
     request_search = 100
     response_search = 200
-    insert = 101
-    delete = 102
-    lookup = 103
+    insert_element = 101
+    delete_element = 102
+    lookup_element = 103
     join = 104
     leave = 105
     command_linearize = 106
@@ -21,10 +21,11 @@ struct Message
     data::Int
     success::Bool
     data_hash::Float64
+    data_key::Int
 end
 
-function Message(command::Command; from::Int=0, node=0, data=0, success=false, data_hash=0.0)
-    return Message(command, from, node, data, success, data_hash)
+function Message(command::Command; from::Int=0, node=0, data=0, success=false, data_hash=0.0, data_key=0)
+    return Message(command, from, node, data, success, data_hash, data_key)
 end
 
 mutable struct Process
