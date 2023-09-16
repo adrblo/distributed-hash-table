@@ -20,16 +20,19 @@ struct Event
     func::Function
 end
 
-function setup_events(rank, comm, ←)
+function setup_events(self, comm, ←)
     # Events: (time in sec., ranks, function)
     events = [
-        Event(0, [17], () -> (rank ← search(g(100), rank))),
+        Event(0, [25], () -> (self ← insert(100, self))),
+        Event(4, [17], () -> (self ← search(g(100), self))),
+        Event(4, [13], () -> (self ← lookup(g(101), self))),
+        Event(6, [54], () -> (self ← delete(g(100), self))),
     ]
     
     rank_events = []
 
     for event in events
-        if rank in event.ranks
+        if self in event.ranks
             push!(rank_events, event)
         end
     end

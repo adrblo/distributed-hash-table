@@ -21,7 +21,7 @@ struct Message
     data::Int
     success::Bool
     data_hash::Float64
-    data_key::Int
+    data_key::Float64
 end
 
 function Message(command::Command; from::Int=0, node=0, data=0, success=false, data_hash=0.0, data_key=0)

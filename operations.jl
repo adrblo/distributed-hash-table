@@ -32,7 +32,7 @@ function build_handle_message(rank, comm, p)
         )
 
     function handle_message(message::Message)
-        map_from_message[message.command](message.from, message.node, message.data, message.success, message.data_hash, p, ←)
+        map_from_message[message.command](message.from, message.node, message.data, message.success, message.data_hash, message.data_key, p, ←)
         @info string("Call_self: " * string(rank) * " ← " * string(message.command) * " from " * string(rank)) message
     end
 
@@ -68,7 +68,7 @@ function _search(p, ←, from, data_hash::Float64)
             p.left ← search(data_hash, from)
         else
             # search is at correct node
-            @info "Seach ARRIVED" data_hash from self_hash
+            @info "Search ARRIVED" data_hash from self_hash
 
             # callback
             p.self ← callback_search(data_hash, from, p.self)
@@ -95,11 +95,27 @@ function callback_search(data_hash, from, node)
     return (_callback_search, (data_hash, from, node))
 end
 
-function _lookup(p, ←, from, data_key)
-    data_hash = g(data_key)
-    p.self ← search(data_hash, from)
-    #in Zielspeicher nach Datum suchen
-    return
+function _lookup(p, ←, from, data_hash)
+    self_hash = h(p.self)
+    left_hash = h(p.left)
+    right_hash = h(p.right)
+    if !(data_hash >= left_hash && data_hash <= right_hash)
+        r = hash_route(p.self, p.neighbors, data_hash)
+        @info "Lookup" data_hash from r self_hash
+        r ← lookup(data_hash, from)
+        return
+    else
+        if data_hash < self_hash
+            @info "Lookup near" data_hash from self_hash
+            p.left ← lookup(data_hash, from)
+        else
+            # search is at correct node
+            data = get(p.storage, data_hash, "Sorry, not found :(")
+            @info "Lookup ARRIVED" data_hash from self_hash data
+
+            # possible callback
+        end
+    end
 end
 
 function lookup(data_key, from)
@@ -107,10 +123,27 @@ function lookup(data_key, from)
 end
 
 function _insert(p, ←, from, data)
-    #data=data_key?
     data_hash = g(data)
-    p.self ← search(data_hash, from)
-    #in Zielspeicher Datum einfuegen
+    self_hash = h(p.self)
+    left_hash = h(p.left)
+    right_hash = h(p.right)
+    if !(data_hash >= left_hash && data_hash <= right_hash)
+        r = hash_route(p.self, p.neighbors, data_hash)
+        @info "Insert Forward" data_hash from r self_hash
+        r ← insert(data, from)
+        return
+    else
+        if data_hash < self_hash
+            @info "Insert near" data_hash from self_hash
+            p.left ← insert(data, from)
+        else
+            # insert is at correct node
+            p.storage[data_hash] = data
+            @info "Insert COMPLETE" data_hash from self_hash p.storage
+
+            # possible callback
+        end
+    end
     return
 end
 
@@ -118,10 +151,27 @@ function insert(data, from)
     return (_insert, (data, from))
 end
 
-function _delete(p, ←, data_key, from)
-    data_hash = g(data_key)
-    p.self ← search(data_hash, from)
-    #in Zielspeicher Datum loeschen
+function _delete(p, ←, data_hash, from)
+    self_hash = h(p.self)
+    left_hash = h(p.left)
+    right_hash = h(p.right)
+    if !(data_hash >= left_hash && data_hash <= right_hash)
+        r = hash_route(p.self, p.neighbors, data_hash)
+        @info "Delete Forward" data_hash from r self_hash
+        r ← delete(data_hash, from)
+        return
+    else
+        if data_hash < self_hash
+            @info "Delete near" data_hash from self_hash
+            p.left ← delete(data_hash, from)
+        else
+            # insert is at correct node
+            delete!(p.storage, data_hash)
+            @info "Delete COMPLETE" data_hash from self_hash p.storage
+
+            # possible callback
+        end
+    end
     return
 end
 
