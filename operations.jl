@@ -74,7 +74,7 @@ function _search(p, ←, from, data_hash::Float64)
             @info "Search ARRIVED" data_hash from self_hash
 
             # callback
-            p.self ← callback_search(data_hash, from, p.self)
+            p.self ← callback_search(data_hash, p.self, from)
         end
     end
 end
@@ -86,14 +86,19 @@ end
 function _callback_search(p, ←, requesting_node, data_hash::Float64, data_node)
     nodes = split!(p.combines, request_search, data_hash)
     if isempty(nodes)
+        if requesting_node == p.self
+            @info "CallbackSearch ARRIVED" data_hash requesting_node data_node
+            return
+        end
         r = route(p.self, p.neighbors, requesting_node)
-        @info "CallbackSearch" data_hash r requesting_node data_node p.combines
+        @info "CallbackSearch NoSplit" data_hash r requesting_node data_node p.combines
         r ← callback_search(data_hash, data_node, requesting_node)
-    end
-    for s_node in nodes
-        r = route(p.self, p.neighbors, s_node)
-        @info "CallbackSearch" data_hash r s_node data_node p.combines
-        r ← callback_search(data_hash, data_node, s_node)
+    else
+        for s_node in nodes
+            r = route(p.self, p.neighbors, s_node)
+            @info "CallbackSearch" data_hash r s_node data_node p.combines
+            r ← callback_search(data_hash, data_node, s_node)
+        end
     end
 end
 
