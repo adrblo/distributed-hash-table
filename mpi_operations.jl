@@ -33,7 +33,7 @@ mutable struct Process
     left::Union{Int, Nothing}
     right::Union{Int, Nothing}
     neighbors::Array{Int}
-    storage::Array{Int}
+    storage::Dict{Float64, Int}
 end
 
 function Process(rank::Int, size::Int)
@@ -45,7 +45,7 @@ function Process(rank::Int, size::Int)
 
     N = neighbors(rank, size)
 
-    storage = []
+    storage = Dict()
 
     return Process(rank, left, right, N, storage)
 end
