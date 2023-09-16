@@ -12,7 +12,7 @@ function build_handle_message(rank, comm, p)
             _linearize => (node) -> Message(command_linearize; node=node),
             _trace => (node, from) -> Message(command_trace; node=node, from=from),
             _search => (data_hash, from) -> Message(request_search; data_hash=data_hash, from=from),
-            _callback_search => (data_hash, from, node) -> Message(response_search; data_hash=data_hash, from=from, node=node),
+            _callback_search => (data_hash, data_node, requesting_node) -> Message(response_search; data_hash=data_hash, from=data_node, node=requesting_node),
             _lookup => (data_key, from) -> Message(lookup_element; data_key=data_key, from=from),
             _insert => (data, from) -> Message(insert_element; data=data, from=from),
             _delete => (data_key, from) -> Message(delete_element; data_key=data_key, from=from)
@@ -25,7 +25,7 @@ function build_handle_message(rank, comm, p)
             command_linearize => (f, n, d, s, dh, dk, p, ←) -> _linearize(p, n, ←),
             command_trace => (f, n, d, s, dh, dk, p, ←) -> _trace(p, n, ←, f),
             request_search => (f, n, d, s, dh, dk, p, ←) -> _search(p, ←, f, dh),
-            response_search => (f, n, d, s, dh, dk, p, ←) -> _callback_search(p, ←, f, dh, n),
+            response_search => (f, n, d, s, dh, dk, p, ←) -> _callback_search(p, ←, n, dh, f),
             lookup_element => (f, n, d, s, dh, dk, p, ←) -> _lookup(p, ←, f, dk),
             insert_element => (f, n, d, s, dh, dk, p, ←) -> _insert(p, ←, f, d),
             delete_element => (f, n, d, s, dh, dk, p, ←) -> _delete(p, ←, dk, f),
@@ -58,9 +58,12 @@ function _search(p, ←, from, data_hash::Float64)
     left_hash = h(p.left)
     right_hash = h(p.right)
     if !(data_hash >= left_hash && data_hash <= right_hash)
-        r = hash_route(p.self, p.neighbors, data_hash)
-        @info "Search" data_hash from r self_hash
-        r ← search(data_hash, from)
+        not_already_requested = combine!(p.combines, request_search, data_hash, from)
+        if not_already_requested
+            r = hash_route(p.self, p.neighbors, data_hash)
+            @info "Search" data_hash from r self_hash p.combines
+            r ← search(data_hash, p.self)
+        end
         return
     else
         if data_hash < self_hash
@@ -80,19 +83,22 @@ function search(data_hash, from)
     return (_search, (data_hash, from))
 end
 
-function _callback_search(p, ←, from, data_hash::Float64, node)
-    if p.self == from
-        # do something
-        @info "CallbackSearch ARRIVED" data_hash from node
-    else
-        r = route(p.self, p.neighbors, from)
-        @info "CallbackSearch" data_hash r from node
-        r ← callback_search(data_hash, from, node)
+function _callback_search(p, ←, requesting_node, data_hash::Float64, data_node)
+    nodes = split!(p.combines, request_search, data_hash)
+    if isempty(nodes)
+        r = route(p.self, p.neighbors, requesting_node)
+        @info "CallbackSearch" data_hash r requesting_node data_node p.combines
+        r ← callback_search(data_hash, data_node, requesting_node)
+    end
+    for s_node in nodes
+        r = route(p.self, p.neighbors, s_node)
+        @info "CallbackSearch" data_hash r s_node data_node p.combines
+        r ← callback_search(data_hash, data_node, s_node)
     end
 end
 
-function callback_search(data_hash, from, node)
-    return (_callback_search, (data_hash, from, node))
+function callback_search(data_hash, data_node, requesting_node)
+    return (_callback_search, (data_hash, data_node, requesting_node))
 end
 
 function _lookup(p, ←, from, data_hash)
@@ -210,4 +216,31 @@ end
 
 function linearize(node)
     return (_linearize, (node,))
+end
+
+function combine!(combines::Dict{Tuple{Command, Float64}, Array{Int}}, command::Command, data_key::Float64, from::Int)::Bool
+    """
+    Returns true if a request was not send already
+    """
+    nodes::Array{Int} = get(combines, (command, data_key), [])
+    if !(from in nodes)
+        if isempty(nodes)
+            combines[(command, data_key)] = [from]
+        else
+            push!(combines[(command, data_key)], from)
+        end
+        return true
+    end
+    return false
+end
+
+function split!(combines::Dict{Tuple{Command, Float64}, Array{Int}}, command::Command, data_key::Float64)::Array{Int}
+    """
+    Returns nodes which requested
+    """
+    nodes::Array{Int} = get(combines, (command, data_key), [])
+    if !isempty(nodes)
+        delete!(combines, (command, data_key))
+    end
+    return nodes
 end

@@ -34,6 +34,7 @@ mutable struct Process
     right::Union{Int, Nothing}
     neighbors::Array{Int}
     storage::Dict{Float64, Int}
+    combines::Dict{Tuple{Command, Float64}, Array{Int}}
 end
 
 function Process(rank::Int, size::Int)
@@ -47,5 +48,7 @@ function Process(rank::Int, size::Int)
 
     storage = Dict()
 
-    return Process(rank, left, right, N, storage)
+    combines = Dict()
+
+    return Process(rank, left, right, N, storage, combines)
 end
