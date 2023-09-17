@@ -7,8 +7,11 @@
     request_search = 100
     response_search = 200
     insert_element = 101
+    response_insert = 201
     delete_element = 102
+    response_delete = 202
     lookup_element = 103
+    response_lookup = 203
     process_join = 104
     process_leave = 105
     command_linearize = 106

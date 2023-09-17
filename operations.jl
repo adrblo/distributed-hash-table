@@ -12,7 +12,7 @@ function build_handle_message(rank, comm, p)
             _linearize => (node) -> Message(command_linearize; node=node),
             _trace => (node, from) -> Message(command_trace; node=node, from=from),
             _search => (data_hash, from) -> Message(request_search; data_hash=data_hash, from=from),
-            _callback_search => (data_hash, data_node, requesting_node) -> Message(response_search; data_hash=data_hash, from=data_node, node=requesting_node),
+            _callback => (type, data_hash, data_node, requesting_node, data) -> Message(type; data_hash=data_hash, from=data_node, node=requesting_node, data=data),
             _lookup => (data_key, from) -> Message(lookup_element; data_key=data_key, from=from),
             _insert => (data, from) -> Message(insert_element; data=data, from=from),
             _delete => (data_key, from) -> Message(delete_element; data_key=data_key, from=from),
@@ -27,7 +27,10 @@ function build_handle_message(rank, comm, p)
             command_linearize => (f, n, d, s, dh, dk, p, ←) -> _linearize(p, n, ←),
             command_trace => (f, n, d, s, dh, dk, p, ←) -> _trace(p, n, ←, f),
             request_search => (f, n, d, s, dh, dk, p, ←) -> _search(p, ←, f, dh),
-            response_search => (f, n, d, s, dh, dk, p, ←) -> _callback_search(p, ←, n, dh, f),
+            response_search => (f, n, d, s, dh, dk, p, ←) -> _callback(p, ←, response_search, n, dh, f, d),
+            response_insert => (f, n, d, s, dh, dk, p, ←) -> _callback(p, ←, response_insert, n, dh, f, d),
+            response_delete => (f, n, d, s, dh, dk, p, ←) -> _callback(p, ←, response_delete, n, dh, f, d),
+            response_lookup => (f, n, d, s, dh, dk, p, ←) -> _callback(p, ←, response_lookup, n, dh, f, d),
             lookup_element => (f, n, d, s, dh, dk, p, ←) -> _lookup(p, ←, f, dk),
             insert_element => (f, n, d, s, dh, dk, p, ←) -> _insert(p, ←, f, d),
             delete_element => (f, n, d, s, dh, dk, p, ←) -> _delete(p, ←, dk, f),
@@ -78,7 +81,7 @@ function _search(p, ←, from, data_hash::Float64)
             @info "Search ARRIVED" data_hash from self_hash
 
             # callback
-            p.self ← callback_search(data_hash, p.self, from)
+            p.self ← callback(response_search, data_hash, p.self, from, 0)
         end
     end
 end
@@ -87,27 +90,27 @@ function search(data_hash, from)
     return (_search, (data_hash, from))
 end
 
-function _callback_search(p, ←, requesting_node, data_hash::Float64, data_node)
+function _callback(p, ←, type, requesting_node, data_hash::Float64, data_node, data)
     nodes = split!(p.combines, request_search, data_hash)
     if isempty(nodes)
         if requesting_node == p.self
-            @info "CallbackSearch ARRIVED" data_hash requesting_node data_node
+            @info "Callback ARRIVED" type data_hash requesting_node data_node
             return
         end
         r = route(p.self, p.neighbors, requesting_node)
-        @info "CallbackSearch NoSplit" data_hash r requesting_node data_node p.combines
-        r ← callback_search(data_hash, data_node, requesting_node)
+        @info "Callback NoSplit" type data_hash r requesting_node data_node p.combines
+        r ← callback(type, data_hash, data_node, requesting_node, data)
     else
         for s_node in nodes
             r = route(p.self, p.neighbors, s_node)
-            @info "CallbackSearch" data_hash r s_node data_node p.combines
-            r ← callback_search(data_hash, data_node, s_node)
+            @info "Callback" type data_hash r s_node data_node p.combines
+            r ← callback(type, data_hash, data_node, s_node, data)
         end
     end
 end
 
-function callback_search(data_hash, data_node, requesting_node)
-    return (_callback_search, (data_hash, data_node, requesting_node))
+function callback(type, data_hash, data_node, requesting_node, data)
+    return (_callback, (type, data_hash, data_node, requesting_node, data))
 end
 
 function _lookup(p, ←, from, data_hash)
@@ -125,10 +128,11 @@ function _lookup(p, ←, from, data_hash)
             p.left ← lookup(data_hash, from)
         else
             # search is at correct node
-            data = get(p.storage, data_hash, "Sorry, not found :(")
+            data = get(p.storage, data_hash, 0) # 0 means not found
             @info "Lookup ARRIVED" data_hash from self_hash data
 
-            # possible callback
+            # callback
+            p.self ← callback(response_lookup, data_hash, p.self, from, data)
         end
     end
 end
@@ -156,7 +160,8 @@ function _insert(p, ←, from, data)
             p.storage[data_hash] = data
             @info "Insert COMPLETE" data_hash from self_hash p.storage
 
-            # possible callback
+            # callback
+            p.self ← callback(response_insert, data_hash, p.self, from, data)
         end
     end
     return
@@ -184,7 +189,8 @@ function _delete(p, ←, data_hash, from)
             delete!(p.storage, data_hash)
             @info "Delete COMPLETE" data_hash from self_hash p.storage
 
-            # possible callback
+            # callback
+            p.self ← callback(response_delete, data_hash, p.self, from, 0)
         end
     end
     return
