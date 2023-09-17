@@ -23,12 +23,13 @@ end
 function setup_events(self, comm, ←, p)
     # Events: (time in sec., ranks, function)
     events = [
+        Event(0, [63], () -> (62 ← join(self))),
         Event(0, [17], () -> (self ← insert(100, self))),
         Event(0, [17], () -> (p.storage[0.1] = 404)),
         Event(4, [17], () -> (self ← search(g(100), self))),
         Event(4, [13], () -> (self ← lookup(g(101), self))),
         Event(6, [54], () -> (self ← delete(g(100), self))),
-        Event(8, [17], () -> (self ← leave(self))),
+        #Event(8, [17], () -> (self ← leave(self))),
     ]
     
     rank_events = []
@@ -67,7 +68,11 @@ function example_run()
     logger = SimpleLogger(open("rank_" * string(rank) * ".log", "w+"))
     global_logger(logger)
 
-    p = Process(rank, size)
+    if rank == 63
+        p = EmptyProcess(rank)
+    else
+        p = Process(rank, size)
+    end
     @info "Process" p
     handle_message, ← = build_handle_message(rank, comm, p)
 

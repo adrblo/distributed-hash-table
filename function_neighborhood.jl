@@ -75,6 +75,7 @@ function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
 
     x+1 := Index of node x
     """
+    # TODO replace x+1 with correct mapping of node
     if i === nothing
         if x == nodes[permh][1]
             return nodes[permh][size(nodes, 1)]
@@ -97,6 +98,7 @@ function succᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
 
     x+1 := Index of node x
     """
+    # TODO replace x+1 with correct mapping of node
     if i === nothing
         if x == nodes[permh][size(nodes, 1)]
             return nodes[permh][1]
@@ -123,11 +125,11 @@ end
 
 function calc_neighbors(self::Int, neighbors)
     ids = [bitstring(id(x)) for x in neighbors]
-    nodes = p.neighbors
+    nodes = neighbors
     idsh, permh, permh⁻¹ = hash_props(neighbors)
     perm_ids = permh
     perm_ids⁻¹ = permh⁻¹
-    context = (p.neighbors, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
+    context = (neighbors, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
 
     N = Set()
 

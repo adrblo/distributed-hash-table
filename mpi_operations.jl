@@ -43,13 +43,26 @@ mutable struct Process
 end
 
 function Process(rank::Int, size::Int)
-    nodes, ids = props(size)
+    nodes, ids = props(size - 1)
     idsh, permh, permh⁻¹ = hash_props(nodes)
     context = (nodes, ids, permh, permh⁻¹, idsh, permh, permh⁻¹)
     left = predᵢ(nothing, 0, rank, context...)
     right = succᵢ(nothing, 0, rank, context...)
 
     N = neighbors(rank, size)
+
+    storage = Dict()
+
+    combines = Dict()
+
+    return Process(rank, left, right, N, storage, combines)
+end
+
+
+function EmptyProcess(rank::Int)
+    N = []
+    left = nothing
+    right = nothing
 
     storage = Dict()
 

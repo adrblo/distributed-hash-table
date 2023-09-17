@@ -284,6 +284,7 @@ function _linearize(p::Process, node, ←)
     # re set direct neighbors
     p.left = left
     p.right = right
+    p.neighbors = new_neighbors
 
     # TODO circle
 end
@@ -315,10 +316,7 @@ function _linearizeᵢ(i, p::Process, node, ←) # TODO DELETE
         end
     end
 
-
 end
-
-function range()
 
 function linearize(node)
     return (_linearize, (node,))
