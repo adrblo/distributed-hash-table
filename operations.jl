@@ -239,7 +239,8 @@ function info(content::Int)
 end
 
 function _linearize(p::Process, node, ←)
-    p.left ← linearize(0)
+    # refresh neighbors
+    
 end
 
 function linearize(node)

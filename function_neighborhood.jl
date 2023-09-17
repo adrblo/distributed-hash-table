@@ -9,30 +9,30 @@ using Logging
 const mult = 2500
 
 function id(x::Int)::UInt64
-    return hash(x)
+    return hash((x + 1) * mult)
 end
 
 function props(size::Int)
     nodes::Vector{Int} = range(0, size-1)
     ids::Vector{String} = [bitstring(id(x)) for x in nodes]
-    perm_ids = sortperm(ids)
-    perm_ids⁻¹ = sortperm(perm_ids)
 
-    return nodes, ids, perm_ids, perm_ids⁻¹
+    return nodes, ids
 end
 
 function hash_props(nodes)
-    ids::Vector{Float64} = [h(x) for x in nodes]
-    perm_ids = sortperm(ids)
-    perm_ids⁻¹ = sortperm(perm_ids)
+    hs::Vector{Float64} = [h(x) for x in nodes]
+    perm = sortperm(hs)
+    perm⁻¹ = sortperm(perm)
 
-    return ids, perm_ids, perm_ids⁻¹
+    return hs, perm, perm⁻¹
 end
 
 function neighbors(self::Int, size::Int)
     # ⇒ ids[perm_ids] := sorted array of ids
-    nodes, ids, perm_ids, perm_ids⁻¹ = props(size)
+    nodes, ids = props(size)
     idsh, permh, permh⁻¹ = hash_props(nodes)
+    perm_ids = permh
+    perm_ids⁻¹ = permh⁻¹
     context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
 
     N = Set()
