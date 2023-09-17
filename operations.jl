@@ -65,7 +65,7 @@ function _search(p, ←, from, data_hash::Float64)
     left_hash = h(p.left)
     right_hash = h(p.right)
     if !(data_hash >= left_hash && data_hash <= right_hash)
-        not_already_requested = combine!(p.combines, request_search, data_hash, from)
+        not_already_requested = combine!(p.combines, response_search, data_hash, from)
         if not_already_requested
             r = hash_route(p.self, p.neighbors, data_hash)
             @info "Search" data_hash from r self_hash p.combines
@@ -91,7 +91,7 @@ function search(data_hash, from)
 end
 
 function _callback(p, ←, type, requesting_node, data_hash::Float64, data_node, data)
-    nodes = split!(p.combines, request_search, data_hash)
+    nodes = split!(p.combines, type, data_hash)
     if isempty(nodes)
         if requesting_node == p.self
             @info "Callback ARRIVED" type data_hash requesting_node data_node
@@ -118,9 +118,12 @@ function _lookup(p, ←, from, data_hash)
     left_hash = h(p.left)
     right_hash = h(p.right)
     if !(data_hash >= left_hash && data_hash <= right_hash)
-        r = hash_route(p.self, p.neighbors, data_hash)
-        @info "Lookup" data_hash from r self_hash
-        r ← lookup(data_hash, from)
+        not_already_requested = combine!(p.combines, response_lookup, data_hash, from)
+        if not_already_requested
+            r = hash_route(p.self, p.neighbors, data_hash)
+            @info "Lookup" data_hash from r self_hash
+            r ← lookup(data_hash, p.self)
+        end
         return
     else
         if data_hash < self_hash
@@ -147,9 +150,12 @@ function _insert(p, ←, from, data)
     left_hash = h(p.left)
     right_hash = h(p.right)
     if !(data_hash >= left_hash && data_hash <= right_hash)
-        r = hash_route(p.self, p.neighbors, data_hash)
-        @info "Insert Forward" data_hash from r self_hash
-        r ← insert(data, from)
+        not_already_requested = combine!(p.combines, response_insert, data_hash, from)
+        if not_already_requested
+            r = hash_route(p.self, p.neighbors, data_hash)
+            @info "Insert Forward" data_hash from r self_hash
+            r ← insert(data, p.self)
+        end
         return
     else
         if data_hash < self_hash
@@ -176,9 +182,12 @@ function _delete(p, ←, data_hash, from)
     left_hash = h(p.left)
     right_hash = h(p.right)
     if !(data_hash >= left_hash && data_hash <= right_hash)
-        r = hash_route(p.self, p.neighbors, data_hash)
-        @info "Delete Forward" data_hash from r self_hash
-        r ← delete(data_hash, from)
+        not_already_requested = combine!(p.combines, response_delete, data_hash, from)
+        if not_already_requested
+            r = hash_route(p.self, p.neighbors, data_hash)
+            @info "Delete Forward" data_hash from r self_hash
+            r ← delete(data_hash, p.self)
+        end
         return
     else
         if data_hash < self_hash
