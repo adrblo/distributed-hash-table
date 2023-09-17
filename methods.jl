@@ -37,7 +37,9 @@ end
 
 function route(self::Int, N::Vector{Int}, x::Int)
     # TODO: check if x doesnt exist
-    push!(N, self) # uggly hack
+    if !(self in N)
+        push!(N, self) # uggly hack
+    end
     nodes = N
     ids::Vector{String} = [bitstring(id(node)) for node in N]
     perm_ids = sortperm(ids)
@@ -75,7 +77,9 @@ end
 
 function hash_route(self::Int, N::Vector{Int}, data_hash)
     # TODO: check if x doesnt exist
-    push!(N, self) # uggly hack
+    if !(self in N)
+        push!(N, self) # uggly hack
+    end
     nodes = N
     ids::Vector{Float64} = [h(node) for node in N]
     perm_ids = sortperm(ids)

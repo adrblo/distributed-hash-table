@@ -9,8 +9,8 @@
     insert_element = 101
     delete_element = 102
     lookup_element = 103
-    join = 104
-    leave = 105
+    process_join = 104
+    process_leave = 105
     command_linearize = 106
 end
 

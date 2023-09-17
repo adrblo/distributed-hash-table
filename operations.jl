@@ -15,7 +15,9 @@ function build_handle_message(rank, comm, p)
             _callback_search => (data_hash, data_node, requesting_node) -> Message(response_search; data_hash=data_hash, from=data_node, node=requesting_node),
             _lookup => (data_key, from) -> Message(lookup_element; data_key=data_key, from=from),
             _insert => (data, from) -> Message(insert_element; data=data, from=from),
-            _delete => (data_key, from) -> Message(delete_element; data_key=data_key, from=from)
+            _delete => (data_key, from) -> Message(delete_element; data_key=data_key, from=from),
+            _join => (node) -> Message(process_join; node=node),
+            _leave => (node) -> Message(process_leave; node=node)
         )
 
     map_from_message = Dict(
@@ -29,6 +31,8 @@ function build_handle_message(rank, comm, p)
             lookup_element => (f, n, d, s, dh, dk, p, ←) -> _lookup(p, ←, f, dk),
             insert_element => (f, n, d, s, dh, dk, p, ←) -> _insert(p, ←, f, d),
             delete_element => (f, n, d, s, dh, dk, p, ←) -> _delete(p, ←, dk, f),
+            process_join => (f, n, d, s, dh, dk, p, ←) -> _join(p, n, ←),
+            process_leave => (f, n, d, s, dh, dk, p, ←) -> _leave(p, n, ←),
         )
 
     function handle_message(message::Message)
@@ -248,4 +252,36 @@ function split!(combines::Dict{Tuple{Command, Float64}, Array{Int}}, command::Co
         delete!(combines, (command, data_key))
     end
     return nodes
+end
+
+function _leave(p::Process, node, ←)
+    if p.self == node
+        for neighbor in p.neighbors
+            if neighbor !== node
+                neighbor ← leave(node)
+            end
+        end
+        @info "Leave INITIATED" node
+        #TODO daten an linken nachbar uebertragen
+        return
+    else 
+        deleteat!(p.neighbors, findall(x->x==node,p.neighbors))
+        @info "Leave ARRIVED" node p.neighbors
+        #TODO linken Nachbar von p.right auf p.left aendern (+ selbes bei p.left)
+        return
+    end
+end
+
+function leave(node)
+    return (_leave, (node))
+end
+
+function _join(p::Process, node, ←)
+    #linearize v auf Knoten u aufrufen
+    p.self ← linearize(node)
+    #alle relevante daten aus speicher von pred(v) an v abgeben
+end
+
+function join(node)
+    return (_join, (node,))
 end

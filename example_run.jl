@@ -27,6 +27,7 @@ function setup_events(self, comm, ←)
         Event(4, [17], () -> (self ← search(g(100), self))),
         Event(4, [13], () -> (self ← lookup(g(101), self))),
         Event(6, [54], () -> (self ← delete(g(100), self))),
+        Event(8, [17], () -> (self ← leave(self))),
     ]
     
     rank_events = []
