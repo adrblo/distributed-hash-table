@@ -119,3 +119,44 @@ function rangeᵢ(i::Union{Int, Nothing}, x::Int, nodes, ids, perm_ids, perm_ids
         nodes[perm_ids][max(perm_ids⁻¹[succᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1], perm_ids⁻¹[succᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1])]
     )
 end
+
+
+function calc_neighbors(self::Int, neighbors)
+    ids = [bitstring(id(x)) for x in neighbors]
+    nodes = p.neighbors
+    idsh, permh, permh⁻¹ = hash_props(neighbors)
+    perm_ids = permh
+    perm_ids⁻¹ = permh⁻¹
+    context = (p.neighbors, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
+
+    N = Set()
+
+    left = predᵢ(nothing, 0, self, context...)
+    right = succᵢ(nothing, 0, self, context...)
+
+    if left !== nothing
+        push!(N, left)
+    end
+
+    if right !== nothing
+        push!(N, right)
+    end
+
+    for i in 0:length(ids[1])
+        r = rangeᵢ(i, self, context...)
+
+        prefix = bitstring(id(self))[1:i]
+
+        for j in perm_ids⁻¹[r[1] + 1]:perm_ids⁻¹[r[2] + 1]
+            idj = ids[perm_ids][j]
+            if startswith(idj, prefix)
+                push!(N, nodes[perm_ids][j])
+            end
+        end
+    end
+
+    delete!(N, self)
+    Narray = collect(N)
+
+    return (Narray, left, right)
+end
