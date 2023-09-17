@@ -15,6 +15,8 @@
     process_join = 104
     process_leave = 105
     command_linearize = 106
+    transfer_element = 107
+    forward_node = 108
 end
 
 struct Message

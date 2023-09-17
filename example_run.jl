@@ -20,10 +20,11 @@ struct Event
     func::Function
 end
 
-function setup_events(self, comm, ←)
+function setup_events(self, comm, ←, p)
     # Events: (time in sec., ranks, function)
     events = [
         Event(0, [17], () -> (self ← insert(100, self))),
+        Event(0, [17], () -> (p.storage[0.1] = 404)),
         Event(4, [17], () -> (self ← search(g(100), self))),
         Event(4, [13], () -> (self ← lookup(g(101), self))),
         Event(6, [54], () -> (self ← delete(g(100), self))),
@@ -70,7 +71,7 @@ function example_run()
     @info "Process" p
     handle_message, ← = build_handle_message(rank, comm, p)
 
-    events, done_events = setup_events(rank, comm, ←)
+    events, done_events = setup_events(rank, comm, ←, p)
 
     while MPI.Wtime() - start_time < max_time
         if MPI.Iprobe(comm; source=MPI.ANY_SOURCE)

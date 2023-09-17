@@ -17,7 +17,9 @@ function build_handle_message(rank, comm, p)
             _insert => (data, from) -> Message(insert_element; data=data, from=from),
             _delete => (data_key, from) -> Message(delete_element; data_key=data_key, from=from),
             _join => (node) -> Message(process_join; node=node),
-            _leave => (node) -> Message(process_leave; node=node)
+            _leave => (node) -> Message(process_leave; node=node),
+            _leave_transfer => (data_hash, data) -> Message(transfer_element; data_hash=data_hash, data=data),
+            _leave_forward => (from, node) -> Message(forward_node; from=from, node=node)
         )
 
     map_from_message = Dict(
@@ -36,6 +38,8 @@ function build_handle_message(rank, comm, p)
             delete_element => (f, n, d, s, dh, dk, p, ←) -> _delete(p, ←, dk, f),
             process_join => (f, n, d, s, dh, dk, p, ←) -> _join(p, n, ←),
             process_leave => (f, n, d, s, dh, dk, p, ←) -> _leave(p, n, ←),
+            transfer_element => (f, n, d, s, dh, dk, p, ←) -> _leave_transfer(p, dh, d),
+            forward_node => (f, n, d, s, dh, dk, p, ←) -> _leave_forward(p, f, n)
         )
 
     function handle_message(message::Message)
@@ -269,6 +273,28 @@ function split!(combines::Dict{Tuple{Command, Float64}, Array{Int}}, command::Co
     return nodes
 end
 
+function _leave_transfer(p::Process, data_hash, data)
+    p.storage[data_hash] = data
+    @info "Leave TRANSFER" data data_hash p.storage
+end
+
+function leave_transfer(data_hash, data)
+    return (_leave_transfer, (data_hash, data))
+end
+
+function _leave_forward(p::Process, from, node)
+    if p.left == from
+        p.left = node
+    elseif p.right == from
+        p.right == node
+    end
+    @info "Leave FORWARD" from node p
+end
+
+function leave_forward(from, node)
+    return (_leave_forward, (from, node))
+end
+
 function _leave(p::Process, node, ←)
     if p.self == node
         for neighbor in p.neighbors
@@ -277,13 +303,15 @@ function _leave(p::Process, node, ←)
             end
         end
         @info "Leave INITIATED" node
-        #TODO daten an linken nachbar uebertragen
-        return
+        for (k, v) in p.storage
+            p.left ← leave_transfer(k, v)
+        end
+        p.left ← leave_forward(p.self, p.right)
+        p.right ← leave_forward(p.self, p.left)
+        @info "Leave COMPLETE" p
     else 
         deleteat!(p.neighbors, findall(x->x==node,p.neighbors))
         @info "Leave ARRIVED" node p.neighbors
-        #TODO linken Nachbar von p.right auf p.left aendern (+ selbes bei p.left)
-        return
     end
 end
 
