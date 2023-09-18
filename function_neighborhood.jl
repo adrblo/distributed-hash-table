@@ -37,7 +37,7 @@ function neighbors(self::Int, size::Int)
     context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
 
     N = Set()
-    
+    levels::Dict{Int, Array{Int}} = Dict()
 
     left = predᵢ(nothing, 0, self, context...)
     right = succᵢ(nothing, 0, self, context...)
@@ -55,11 +55,21 @@ function neighbors(self::Int, size::Int)
 
         prefix = bitstring(id(self))[1:i]
 
+        level_N = []
+
         for j in perm_ids⁻¹[r[1] + 1]:perm_ids⁻¹[r[2] + 1]
             idj = ids[perm_ids][j]
             if startswith(idj, prefix)
                 push!(N, nodes[perm_ids][j])
+                if nodes[perm_ids][j] !== self
+                    push!(level_N, nodes[perm_ids][j])
+                end
             end
+        end
+
+        # add to levels
+        if !isempty(level_N)
+            levels[i] = level_N
         end
     end
 
@@ -68,7 +78,7 @@ function neighbors(self::Int, size::Int)
     nids = [bitstring(id(x)) for x in Narray]
     perm_ids = sortperm(nids)
 
-    return Narray[perm_ids]
+    return Narray[perm_ids], levels
 end
 
 function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)::Union{Int, Nothing}
@@ -141,6 +151,7 @@ function calc_neighbors(self::Int, neighbors)
     context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
 
     N = Set()
+    levels::Dict{Int, Array{Int}} = Dict()
 
     left = predᵢ(nothing, 0, self, context...)
     right = succᵢ(nothing, 0, self, context...)
@@ -161,16 +172,26 @@ function calc_neighbors(self::Int, neighbors)
 
         prefix = bitstring(id(self))[1:i]
 
+        level_N = []
+
         for j in perm_ids⁻¹[r1_pos]:perm_ids⁻¹[r2_pos]
             idj = ids[perm_ids][j]
             if idj[1:i] == prefix
                 push!(N, nodes[perm_ids][j])
+                if nodes[perm_ids][j] !== self
+                    push!(level_N, nodes[perm_ids][j])
+                end
             end
+        end
+
+        # add to levels
+        if !isempty(level_N)
+            levels[i] = level_N
         end
     end
 
     delete!(N, self)
     Narray = collect(N)
 
-    return (Narray, left, right)
+    return (Narray, left, right, levels)
 end

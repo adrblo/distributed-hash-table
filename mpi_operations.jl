@@ -40,6 +40,7 @@ mutable struct Process
     neighbors::Array{Int}
     storage::Dict{Float64, Int}
     combines::Dict{Tuple{Command, Float64}, Array{Int}}
+    levels::Dict{Int, Array{Int}}
 end
 
 function Process(rank::Int, size::Int)
@@ -49,13 +50,13 @@ function Process(rank::Int, size::Int)
     left = predᵢ(nothing, 0, rank, context...)
     right = succᵢ(nothing, 0, rank, context...)
 
-    N = neighbors(rank, size)
+    N, levels = neighbors(rank, size)
 
     storage = Dict()
 
     combines = Dict()
 
-    return Process(rank, left, right, N, storage, combines)
+    return Process(rank, left, right, N, storage, combines, levels)
 end
 
 
@@ -68,5 +69,7 @@ function EmptyProcess(rank::Int)
 
     combines = Dict()
 
-    return Process(rank, left, right, N, storage, combines)
+    levels = Dict()
+
+    return Process(rank, left, right, N, storage, combines, levels)
 end

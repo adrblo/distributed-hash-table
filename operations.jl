@@ -244,7 +244,7 @@ function _linearize(p::Process, node, ←)
         return
     end
     
-    (new_neighbors, left, right) = calc_neighbors(p.self, union(p.neighbors, node))
+    (new_neighbors, left, right, levels) = calc_neighbors(p.self, union(p.neighbors, node))
     
     # handle redirect
     diffset = setdiff(p.neighbors, new_neighbors)
@@ -261,7 +261,7 @@ function _linearize(p::Process, node, ←)
         ids_nnwn_perm⁻¹ = sortperm(ids_nnwn_perm)
 
         #pos = ids_nnwn_perm⁻¹[length(new_neighbors_with_node)]
-        pos = findfirst(new_neighbors_with_node[ids_nnwn_perm] .== node)
+        pos = findfirst(new_neighbors_with_node[ids_nnwn_perm] .== was_neighbor)
 
         @info "DEBUG Linearize 2" was_neighbor bitstring(id(p.self)) bitstring(id(node))
         if pos == 1
@@ -301,7 +301,7 @@ function _linearize(p::Process, node, ←)
     p.left = left
     p.right = right
     p.neighbors = new_neighbors
-
+    p.levels = levels
     # TODO circle
 end
 
@@ -396,5 +396,25 @@ end
 
 
 function timeout(p::Process, ←)
-    @info "Timeout"
+    # rule 1a
+    for (level, nodes) in p.levels
+        # case list of one
+        if length(nodes) == 1
+            @info "Timeout 1a" level, length(nodes) nodes[1] nodes p.self
+            nodes[1] ← linearize(p.self)
+        else
+            pos = trunc(Int, length(nodes)/2) + 1
+            insert!(nodes, pos, p.self)
+
+            for i in 1:pos-1
+                @info "Timeout 1a" level, length(nodes) nodes[i] nodes[i+1] nodes p.self
+                nodes[i] ← linearize(nodes[i + 1])
+            end
+
+            for i in reverse(pos+1:length(nodes))
+                @info "Timeout 1a" level, length(nodes) nodes[i] nodes[i-1] nodes p.self
+                nodes[i] ← linearize(nodes[i - 1])
+            end
+        end
+    end
 end

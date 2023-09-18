@@ -20,7 +20,7 @@ struct Event
     func::Function
 end
 
-function setup_events(self, comm, ←, p)
+function setup_events(self, comm, ←, p, number_ranks)
     # Events: (time in sec., ranks, function)
     events = [
         Event(0, [31], () -> (30 ← join(self))),
@@ -30,6 +30,7 @@ function setup_events(self, comm, ←, p)
         #Event(4, [13], () -> (self ← lookup(g(101), self))),
         #Event(6, [54], () -> (self ← delete(g(100), self))),
         #Event(8, [17], () -> (self ← leave(self))),
+        Event(10, 0:number_ranks-1, () -> (timeout(p, ←)))
     ]
     
     rank_events = []
@@ -58,7 +59,7 @@ end
 
 function example_run()
     sleep_time = 0.01 # checkup and refresh delay
-    max_time = 15 # maximum time of run
+    max_time = 20 # maximum time of run
     unconnected_nodes = [31]
 
     start_time = MPI.Wtime()
@@ -77,13 +78,10 @@ function example_run()
     @info "Process" p
     handle_message, ← = build_handle_message(rank, comm, p)
 
-    events, done_events = setup_events(rank, comm, ←, p)
+    events, done_events = setup_events(rank, comm, ←, p, size)
 
     loop_counter = 1
     while MPI.Wtime() - start_time < max_time
-        if mod(loop_counter, 50) == 0
-            timeout(p, ←)
-        end
 
         if MPI.Iprobe(comm; source=MPI.ANY_SOURCE)
             message = MPI.Recv(Message, comm; source=MPI.ANY_SOURCE)
