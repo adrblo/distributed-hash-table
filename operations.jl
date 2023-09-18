@@ -41,9 +41,9 @@ function build_handle_message(rank, comm, p)
             transfer_element => (f, n, d, s, dh, dk, p, ←) -> _leave_transfer(p, dh, d),
             forward_node => (f, n, d, s, dh, dk, p, ←) -> _leave_forward(p, f, n)
         )
-    commands = keys(Base.Enums.namemap(Command))
+
     function handle_message(message::Message)
-        @info "Command handle" message.command (message.command in commands)
+        @info "Command handle" message.command
         map_from_message[message.command](message.from, message.node, message.data, message.success, message.data_hash, message.data_key, p, ←)
         @info string("Call_self: " * string(rank) * " ← " * string(message.command) * " from " * string(rank)) message
     end

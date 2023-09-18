@@ -71,7 +71,7 @@ function example_run()
     if rank == 7
         p = EmptyProcess(rank)
     else
-        p = Process(rank, size)
+        p = Process(rank, size - 1)
     end
     @info "Process" p
     handle_message, ← = build_handle_message(rank, comm, p)

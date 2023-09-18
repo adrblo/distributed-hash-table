@@ -43,7 +43,7 @@ mutable struct Process
 end
 
 function Process(rank::Int, size::Int)
-    nodes, ids = props(size - 1)
+    nodes, ids = props(size)
     idsh, permh, permh⁻¹ = hash_props(nodes)
     context = (nodes, ids, permh, permh⁻¹, idsh, permh, permh⁻¹)
     left = predᵢ(nothing, 0, rank, context...)
