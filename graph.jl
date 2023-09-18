@@ -19,4 +19,4 @@ end
 
 nodesize = [Graphs.outdegree(g, v) for v in Graphs.vertices(g)]
 gp = gplot(g, nodelabel=0:(nv(g)-1), nodelabelsize=500, edgelinewidth=200, arrowlengthfrac=0.01)
-draw(PDF("graph.pdf", 100cm, 100cm), gp)
+draw(PDF("graph.pdf", 50cm, 50cm), gp)
