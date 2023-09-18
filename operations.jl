@@ -244,6 +244,9 @@ function _linearize(p::Process, node, ←)
     
     # handle redirect
     diffset = union(setdiff(p.neighbors, new_neighbors), setdiff(new_neighbors, p.neighbors))
+    if size(diffset, 1) > 1
+        deleteat!(diffset, findall(x->x==node, diffset))
+    end
     @info "DEBUG Linearize 1" new_neighbors p.neighbors node p diffset
 
     for was_neighbor in diffset
@@ -263,6 +266,7 @@ function _linearize(p::Process, node, ←)
             pre = 0
             after = 0
             for bitlen in 1:length(ids_new_neighborswn[1])
+                #TODO nimmt den falschen bitstring
                 if startswith(ids_new_neighborswn[ids_nnwn_perm][pos - 1], bitstring(id(was_neighbor))[1:bitlen])
                     pre = bitlen
                 else
@@ -271,6 +275,7 @@ function _linearize(p::Process, node, ←)
             end
 
             for bitlen in 1:length(ids_new_neighborswn[1])
+                #TODO nimmt den falschen bitstring
                 if startswith(ids_new_neighborswn[ids_nnwn_perm][pos + 1], bitstring(id(was_neighbor))[1:bitlen])
                     after = bitlen
                 else
