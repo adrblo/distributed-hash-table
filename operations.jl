@@ -417,4 +417,41 @@ function timeout(p::Process, ←)
             end
         end
     end
+
+    # rule 1b
+    for (level, nodes) in p.levels
+        for node in nodes
+            ids = [bitstring(id(x)) for x in nodes]
+            nodes = neighbors
+            
+            idsh, permh, permh⁻¹ = hash_props(neighbors)
+            perm_ids = permh
+            perm_ids⁻¹ = permh⁻¹
+            context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
+
+            pos = findfirst(nodes[perm_ids] .== node)
+
+            if pos == 1
+                prev = nothing
+            else
+                prev = pos - 1
+                for other in nodes[1:prev]
+                    r = rangeᵢ(level, other, context...)
+                    r1_pos = findfirst(nodes[perm_ids] .== r[1])
+                    r2_pos = findfirst(nodes[perm_ids] .== r[2])
+
+                    if perm_ids⁻¹[r[1]] < perm_ids⁻¹[prev] < perm_ids⁻¹[r[1]]
+                        #todo morgen
+                    end
+                end
+            end
+
+            if pos == length(nodes)
+                after = nothing
+            else
+                after = pos + 1
+            end
+
+        end
+    end
 end
