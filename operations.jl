@@ -243,22 +243,24 @@ function _linearize(p::Process, node, ←)
     (new_neighbors, left, right) = calc_neighbors(p.self, union(p.neighbors, node))
     
     # handle redirect
-    diffset = union(setdiff(p.neighbors, new_neighbors), setdiff(new_neighbors, p.neighbors))
-    if size(diffset, 1) > 1
-        deleteat!(diffset, findall(x->x==node, diffset))
+    diffset = setdiff(p.neighbors, new_neighbors)
+    if isempty(diffset)
+        diffset = [node]
     end
+    
     @info "DEBUG Linearize 1" new_neighbors p.neighbors node p diffset
 
     for was_neighbor in diffset
         new_neighbors_with_node = union(new_neighbors, was_neighbor)
         ids_new_neighborswn = [bitstring(id(x)) for x in new_neighbors_with_node]
         ids_nnwn_perm = sortperm(ids_new_neighborswn)
-        ids_nnwn_perm⁻¹ = sortperm(ids_new_neighborswn)
+        ids_nnwn_perm⁻¹ = sortperm(ids_nnwn_perm)
 
-        pos = ids_nnwn_perm⁻¹[length(new_neighbors_with_node)]
+        #pos = ids_nnwn_perm⁻¹[length(new_neighbors_with_node)]
+        pos = findfirst(new_neighbors_with_node[ids_nnwn_perm] .== node)
 
-        @info "DEBUG Linearize 2" was_neighbor
-        if pos == 0
+        @info "DEBUG Linearize 2" was_neighbor bitstring(id(p.self)) bitstring(id(node))
+        if pos == 1
             new_neighbors_with_node[ids_nnwn_perm][1] ← linearize(was_neighbor)
         elseif pos == length(new_neighbors_with_node)
             new_neighbors_with_node[ids_nnwn_perm][length(new_neighbors_with_node)] ← linearize(was_neighbor)
@@ -266,8 +268,7 @@ function _linearize(p::Process, node, ←)
             pre = 0
             after = 0
             for bitlen in 1:length(ids_new_neighborswn[1])
-                #TODO nimmt den falschen bitstring
-                if startswith(ids_new_neighborswn[ids_nnwn_perm][pos - 1], bitstring(id(was_neighbor))[1:bitlen])
+                if ids_new_neighborswn[ids_nnwn_perm][pos - 1][1:bitlen] == bitstring(id(was_neighbor))[1:bitlen]
                     pre = bitlen
                 else
                     break
@@ -275,8 +276,7 @@ function _linearize(p::Process, node, ←)
             end
 
             for bitlen in 1:length(ids_new_neighborswn[1])
-                #TODO nimmt den falschen bitstring
-                if startswith(ids_new_neighborswn[ids_nnwn_perm][pos + 1], bitstring(id(was_neighbor))[1:bitlen])
+                if ids_new_neighborswn[ids_nnwn_perm][pos + 1][1:bitlen] ==  bitstring(id(was_neighbor))[1:bitlen]
                     after = bitlen
                 else
                     break
@@ -284,8 +284,10 @@ function _linearize(p::Process, node, ←)
             end
             
             if pre > after
+                @info "DEBUG Linearize" pre ids_new_neighborswn[ids_nnwn_perm][pos - 1] bitstring(id(was_neighbor)) new_neighbors_with_node
                 new_neighbors_with_node[ids_nnwn_perm][pos - 1] ← linearize(was_neighbor)
             else
+                @info "DEBUG Linearize" after ids_new_neighborswn[ids_nnwn_perm][pos + 1] bitstring(id(was_neighbor)) new_neighbors_with_node
                 new_neighbors_with_node[ids_nnwn_perm][pos + 1] ← linearize(was_neighbor)
             end
         end

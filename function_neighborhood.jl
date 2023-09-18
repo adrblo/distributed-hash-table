@@ -163,7 +163,7 @@ function calc_neighbors(self::Int, neighbors)
 
         for j in perm_ids⁻¹[r1_pos]:perm_ids⁻¹[r2_pos]
             idj = ids[perm_ids][j]
-            if startswith(idj, prefix)
+            if idj[1:i] == prefix
                 push!(N, nodes[perm_ids][j])
             end
         end

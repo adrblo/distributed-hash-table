@@ -23,7 +23,7 @@ end
 function setup_events(self, comm, ←, p)
     # Events: (time in sec., ranks, function)
     events = [
-        Event(0, [7], () -> (6 ← join(self))),
+        Event(0, [31], () -> (30 ← join(self))),
         #Event(0, [17], () -> (self ← insert(100, self))),
         #Event(0, [17], () -> (p.storage[0.1] = 404)),
         #Event(4, [17], () -> (self ← search(g(100), self))),
@@ -59,6 +59,7 @@ end
 function example_run()
     sleep_time = 0.01 # checkup and refresh delay
     max_time = 15 # maximum time of run
+    unconnected_nodes = [31]
 
     start_time = MPI.Wtime()
     comm = MPI.COMM_WORLD
@@ -68,10 +69,10 @@ function example_run()
     logger = SimpleLogger(open("rank_" * string(rank) * ".log", "w+"))
     global_logger(logger)
 
-    if rank == 7
+    if rank in unconnected_nodes
         p = EmptyProcess(rank)
     else
-        p = Process(rank, size - 1)
+        p = Process(rank, size - length(unconnected_nodes))
     end
     @info "Process" p
     handle_message, ← = build_handle_message(rank, comm, p)
