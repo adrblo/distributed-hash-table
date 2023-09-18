@@ -240,11 +240,15 @@ function info(content::Int)
 end
 
 function _linearize(p::Process, node, ←)
+    if node in p.neighbors
+        return
+    end
+    
     (new_neighbors, left, right) = calc_neighbors(p.self, union(p.neighbors, node))
     
     # handle redirect
     diffset = setdiff(p.neighbors, new_neighbors)
-    if isempty(diffset)
+    if isempty(diffset) && !(node in new_neighbors)
         diffset = [node]
     end
     
