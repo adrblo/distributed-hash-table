@@ -8,3 +8,5 @@ MPITape.jl
 *.json
 
 *.log
+graph.png
+graph.pdf

@@ -3,14 +3,20 @@ using GraphPlot
 using Compose
 import Cairo, Fontconfig
 
-include("methods.jl")
-include("function_neighborhood.jl")
-
-size = 64
+module M
+    include("methods.jl")
+    include("function_neighborhood.jl")
+end
+size = parse(Int, ARGS[1])
 g = SimpleDiGraph(size)
 
 for node in 0:(size-1)
-    N = neighbors(node, size)
+    N = M.neighbors(node, size)
+    for neig in N
+        add_edge!(g, node + 1, neig + 1)
+    end
 end
 
-#draw(PNG("graph.png", 16cm, 16cm), gplot(g))
+nodesize = [Graphs.outdegree(g, v) for v in Graphs.vertices(g)]
+gp = gplot(g, nodelabel=0:(nv(g)-1), nodelabelsize=500, edgelinewidth=200, arrowlengthfrac=0.01)
+draw(PDF("graph.pdf", 100cm, 100cm), gp)
