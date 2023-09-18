@@ -23,12 +23,12 @@ end
 function setup_events(self, comm, ←, p)
     # Events: (time in sec., ranks, function)
     events = [
-        Event(0, [63], () -> (62 ← join(self))),
-        Event(0, [17], () -> (self ← insert(100, self))),
-        Event(0, [17], () -> (p.storage[0.1] = 404)),
-        Event(4, [17], () -> (self ← search(g(100), self))),
-        Event(4, [13], () -> (self ← lookup(g(101), self))),
-        Event(6, [54], () -> (self ← delete(g(100), self))),
+        Event(0, [7], () -> (6 ← join(self))),
+        #Event(0, [17], () -> (self ← insert(100, self))),
+        #Event(0, [17], () -> (p.storage[0.1] = 404)),
+        #Event(4, [17], () -> (self ← search(g(100), self))),
+        #Event(4, [13], () -> (self ← lookup(g(101), self))),
+        #Event(6, [54], () -> (self ← delete(g(100), self))),
         #Event(8, [17], () -> (self ← leave(self))),
     ]
     
@@ -57,7 +57,7 @@ end
 
 
 function example_run()
-    sleep_time = 0.0001 # checkup and refresh delay
+    sleep_time = 0.01 # checkup and refresh delay
     max_time = 15 # maximum time of run
 
     start_time = MPI.Wtime()
@@ -68,7 +68,7 @@ function example_run()
     logger = SimpleLogger(open("rank_" * string(rank) * ".log", "w+"))
     global_logger(logger)
 
-    if rank == 63
+    if rank == 7
         p = EmptyProcess(rank)
     else
         p = Process(rank, size)

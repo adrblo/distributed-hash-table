@@ -158,10 +158,12 @@ function calc_neighbors(self::Int, neighbors)
     for i in 0:length(ids[1])
         
         r = rangeᵢ(i, self, context...)
+        r1_pos = findfirst(nodes .== r[1])
+        r2_pos = findfirst(nodes .== r[2])
 
         prefix = bitstring(id(self))[1:i]
 
-        for j in perm_ids⁻¹[r[1] + 1]:perm_ids⁻¹[r[2] + 1]
+        for j in perm_ids⁻¹[r1_pos]:perm_ids⁻¹[r2_pos]
             idj = ids[perm_ids][j]
             if startswith(idj, prefix)
                 push!(N, nodes[perm_ids][j])

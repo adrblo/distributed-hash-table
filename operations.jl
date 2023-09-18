@@ -41,8 +41,9 @@ function build_handle_message(rank, comm, p)
             transfer_element => (f, n, d, s, dh, dk, p, ←) -> _leave_transfer(p, dh, d),
             forward_node => (f, n, d, s, dh, dk, p, ←) -> _leave_forward(p, f, n)
         )
-
+    commands = keys(Base.Enums.namemap(Command))
     function handle_message(message::Message)
+        @info "Command handle" message.command (message.command in commands)
         map_from_message[message.command](message.from, message.node, message.data, message.success, message.data_hash, message.data_key, p, ←)
         @info string("Call_self: " * string(rank) * " ← " * string(message.command) * " from " * string(rank)) message
     end
@@ -242,7 +243,10 @@ function _linearize(p::Process, node, ←)
     (new_neighbors, left, right) = calc_neighbors(p.self, union(p.neighbors, node))
     
     # handle redirect
-    for was_neighbor in intersect(new_neighbors, p.neighbors)
+    diffset = union(setdiff(p.neighbors, new_neighbors), setdiff(new_neighbors, p.neighbors))
+    @info "DEBUG Linearize 1" new_neighbors p.neighbors node p diffset
+
+    for was_neighbor in diffset
         new_neighbors_with_node = union(new_neighbors, was_neighbor)
         ids_new_neighborswn = [bitstring(id(x)) for x in new_neighbors_with_node]
         ids_nnwn_perm = sortperm(ids_new_neighborswn)
@@ -250,6 +254,7 @@ function _linearize(p::Process, node, ←)
 
         pos = ids_nnwn_perm⁻¹[length(new_neighbors_with_node)]
 
+        @info "DEBUG Linearize 2" was_neighbor
         if pos == 0
             new_neighbors_with_node[ids_nnwn_perm][1] ← linearize(was_neighbor)
         elseif pos == length(new_neighbors_with_node)
