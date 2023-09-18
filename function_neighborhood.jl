@@ -30,12 +30,14 @@ end
 function neighbors(self::Int, size::Int)
     # ⇒ ids[perm_ids] := sorted array of ids
     nodes, ids = props(size)
+    
     idsh, permh, permh⁻¹ = hash_props(nodes)
     perm_ids = permh
     perm_ids⁻¹ = permh⁻¹
     context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
 
     N = Set()
+    
 
     left = predᵢ(nothing, 0, self, context...)
     right = succᵢ(nothing, 0, self, context...)
@@ -75,16 +77,18 @@ function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
 
     x+1 := Index of node x
     """
+    pos = findfirst(nodes .== x)
     # TODO replace x+1 with correct mapping of node
     if i === nothing
         if x == nodes[permh][1]
             return nodes[permh][size(nodes, 1)]
         else 
-            return nodes[permh][permh⁻¹[x+1] - 1]
+            
+            return nodes[permh][permh⁻¹[pos] - 1]
         end
     end
 
-    for index in (perm_ids⁻¹[x+1] - 1):-1:1
+    for index in (perm_ids⁻¹[pos] - 1):-1:1
         if startswith(ids[perm_ids][index], bitstring(id(x))[1:i] * string(b))
             return nodes[perm_ids][index]
         end
@@ -98,16 +102,17 @@ function succᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
 
     x+1 := Index of node x
     """
+    pos = findfirst(nodes .== x)
     # TODO replace x+1 with correct mapping of node
     if i === nothing
         if x == nodes[permh][size(nodes, 1)]
             return nodes[permh][1]
         else
-            return nodes[permh][permh⁻¹[x+1] + 1]
+            return nodes[permh][permh⁻¹[pos] + 1]
         end
     end
 
-    for index in (perm_ids⁻¹[x+1] + 1):+1:size(nodes, 1)
+    for index in (perm_ids⁻¹[pos] + 1):+1:size(nodes, 1)
         if startswith(ids[perm_ids][index], bitstring(id(x))[1:i] * string(b))
             return nodes[perm_ids][index]
         end
@@ -116,20 +121,26 @@ function succᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
 end
 
 function rangeᵢ(i::Union{Int, Nothing}, x::Int, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)::Tuple{Int, Int}
-    return (
-        nodes[perm_ids][min(perm_ids⁻¹[predᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1], perm_ids⁻¹[predᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1])],
-        nodes[perm_ids][max(perm_ids⁻¹[succᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1], perm_ids⁻¹[succᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹) + 1])]
+    pos_pred_0 = findfirst(nodes .== predᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹))
+    pos_pred_1 = findfirst(nodes .== predᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹))
+    pos_succ_0 = findfirst(nodes .== succᵢ(i, 0, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹))
+    pos_succ_1 = findfirst(nodes .== succᵢ(i, 1, x, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹))
+    return(
+        nodes[perm_ids][min(perm_ids⁻¹[pos_pred_0], perm_ids⁻¹[pos_pred_1])],
+        nodes[perm_ids][max(perm_ids⁻¹[pos_succ_0], perm_ids⁻¹[pos_succ_1])]
     )
 end
 
 
 function calc_neighbors(self::Int, neighbors)
+    push!(neighbors, self)
     ids = [bitstring(id(x)) for x in neighbors]
     nodes = neighbors
+    
     idsh, permh, permh⁻¹ = hash_props(neighbors)
     perm_ids = permh
     perm_ids⁻¹ = permh⁻¹
-    context = (neighbors, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
+    context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
 
     N = Set()
 
@@ -145,6 +156,7 @@ function calc_neighbors(self::Int, neighbors)
     end
 
     for i in 0:length(ids[1])
+        
         r = rangeᵢ(i, self, context...)
 
         prefix = bitstring(id(self))[1:i]

@@ -397,7 +397,9 @@ end
 
 function _join(p::Process, node, ←)
     #linearize v auf Knoten u aufrufen
+    @info "Join INITIATED" p.self node
     p.self ← linearize(node)
+    
     #alle relevante daten aus speicher von pred(v) an v abgeben
 end
 
