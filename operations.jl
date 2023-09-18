@@ -299,35 +299,6 @@ function _linearize(p::Process, node, ←)
     # TODO circle
 end
 
-function _linearizeᵢ(i, p::Process, node, ←) # TODO DELETE
-    ids = [bitstring(id(x)) for x in p.neighbors]
-    nodes = p.neighbors
-    idsh, permh, permh⁻¹ = hash_props(p.neighbors)
-    perm_ids = permh
-    perm_ids⁻¹ = permh⁻¹
-    context = (p.neighbors, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
-
-    range_min = nodes[perm_ids][min(perm_ids⁻¹[predᵢ(i, 0, node, context...) + 1], perm_ids⁻¹[predᵢ(i, 1, node, context...) + 1])]
-    range_max = nodes[perm_ids][max(perm_ids⁻¹[succᵢ(i, 0, node, context...) + 1], perm_ids⁻¹[succᵢ(i, 1, node, context...) + 1])]
-
-    has_matching_prefix = false
-    for b in 0:1
-        if startswith(ids[perm_ids][index], bitstring(id(node))[1:i] * string(b))
-            has_matching_prefix = true
-            break
-        end
-    end
-
-    if has_matching_prefix
-        if h(range_min) > h(node)
-            range_min = node
-        elseif h(range_max) < h(node)
-            range_max = node
-        end
-    end
-
-end
-
 function linearize(node)
     return (_linearize, (node,))
 end
@@ -415,4 +386,9 @@ end
 
 function join(node)
     return (_join, (node,))
+end
+
+
+function timeout(p::Process, ←)
+    @info "Timeout"
 end

@@ -78,7 +78,12 @@ function example_run()
 
     events, done_events = setup_events(rank, comm, ←, p)
 
+    loop_counter = 1
     while MPI.Wtime() - start_time < max_time
+        if mod(loop_counter, 50) == 0
+            timeout(p, ←)
+        end
+
         if MPI.Iprobe(comm; source=MPI.ANY_SOURCE)
             message = MPI.Recv(Message, comm; source=MPI.ANY_SOURCE)
             if message.command !== noCommand
@@ -92,6 +97,8 @@ function example_run()
 
         # apply refresh speed
         sleep(sleep_time)
+
+        loop_counter += 1
     end
 
     MPI.Barrier(comm)
