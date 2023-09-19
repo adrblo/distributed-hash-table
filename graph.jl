@@ -4,8 +4,8 @@ using Compose
 import Cairo, Fontconfig
 
 module M
-    include("methods.jl")
-    include("function_neighborhood.jl")
+    include("hash_table.jl")
+    include("skip_plus.jl")
 end
 size = parse(Int, ARGS[1])
 nodes = Array(range(0, size-1))

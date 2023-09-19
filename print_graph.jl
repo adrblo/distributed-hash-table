@@ -1,5 +1,5 @@
-include("function_neighborhood.jl")
-include("methods.jl")
+include("skip_plus.jl")
+include("hash_table.jl")
 
 size = parse(Int, ARGS[2])
 mode = parse(Int, ARGS[1])
