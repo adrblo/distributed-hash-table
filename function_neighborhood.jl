@@ -38,6 +38,7 @@ function neighbors(self::Int, nodes)
     N = Set()
     levels::Dict{Int, Array{Int}} = Dict()
 
+    # maybe check why and if any neighbor could be self
     left = predᵢ(nothing, 0, self, context...) 
     right = succᵢ(nothing, 0, self, context...)
 
@@ -161,6 +162,7 @@ function calc_neighbors(self::Int, neighbors)
     N = Set()
     levels::Dict{Int, Array{Int}} = Dict()
 
+    # maybe check why and if any neighbor could be self
     left = predᵢ(nothing, 0, self, context...)
     right = succᵢ(nothing, 0, self, context...)
 

@@ -317,6 +317,15 @@ function _linearize(p::Process, node, ←)
         end
     end
 
+    # ugly hack
+    if left == p.self
+        left = p.left
+    end
+
+    if right == p.self
+        right = p.right
+    end
+
     circ = p.circ
     if p.circ !== nothing
         if left !== nothing && p.left === nothing && p.right !== nothing
