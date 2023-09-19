@@ -389,7 +389,24 @@ end
 function _join(p::Process, node, ←)
     #linearize v auf Knoten u aufrufen
     @info "Join INITIATED" p.self node
-    p.self ← linearize(node)
+    if p.left === nothing
+        left = 0
+    else
+        left = h(p.left)
+    end
+
+    if p.right === nothing
+        right = 1
+    else
+        right = h(p.right)
+    end
+
+    if left < h(node) < right
+        p.self ← linearize(node)
+    else
+        r = hash_route(p.self, p.neighbors, h(node))
+        r ← join(node)
+    end
     
     #alle relevante daten aus speicher von pred(v) an v abgeben
 end

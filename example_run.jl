@@ -30,7 +30,11 @@ function setup_events(self, comm, ←, p, number_ranks)
         #Event(4, [13], () -> (self ← lookup(g(101), self))),
         #Event(6, [54], () -> (self ← delete(g(100), self))),
         #Event(8, [17], () -> (self ← leave(self))),
-        Event(10, 0:number_ranks-1, () -> (timeout(p, ←)))
+        Event(5, 0:number_ranks, () -> (timeout(p, ←))),
+        Event(10, 0:number_ranks, () -> (timeout(p, ←))),
+        Event(15, 0:number_ranks, () -> (timeout(p, ←))),
+        Event(20, 0:number_ranks, () -> (timeout(p, ←))),
+        Event(25, 0:number_ranks, () -> (timeout(p, ←)))
     ]
     
     rank_events = []
@@ -58,7 +62,7 @@ end
 
 
 function example_run()
-    sleep_time = 0.01 # checkup and refresh delay
+    sleep_time = 0.001 # checkup and refresh delay
     max_time = 60 # maximum time of run
     unconnected_nodes = [31]
 

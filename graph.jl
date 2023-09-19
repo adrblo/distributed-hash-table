@@ -11,7 +11,7 @@ size = parse(Int, ARGS[1])
 g = SimpleDiGraph(size)
 
 for node in 0:(size-1)
-    N = M.neighbors(node, size)
+    N, l, circ = M.neighbors(node, size)
     for neig in N
         add_edge!(g, node + 1, neig + 1)
     end
