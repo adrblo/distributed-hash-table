@@ -30,11 +30,6 @@ function setup_events(self, comm, ←, p, number_ranks)
         #Event(4, [13], () -> (self ← lookup(g(101), self))),
         #Event(6, [54], () -> (self ← delete(g(100), self))),
         #Event(8, [17], () -> (self ← leave(self))),
-        Event(5, 0:number_ranks, () -> (timeout(p, ←))),
-        Event(10, 0:number_ranks, () -> (timeout(p, ←))),
-        Event(15, 0:number_ranks, () -> (timeout(p, ←))),
-        Event(20, 0:number_ranks, () -> (timeout(p, ←))),
-        Event(25, 0:number_ranks, () -> (timeout(p, ←)))
     ]
     
     rank_events = []
@@ -64,6 +59,7 @@ end
 function example_run()
     sleep_time = 0.001 # checkup and refresh delay
     max_time = 60 # maximum time of run
+    we_do_timeout = true
     unconnected_nodes = [31]
 
     start_time = MPI.Wtime()
@@ -86,7 +82,6 @@ function example_run()
 
     loop_counter = 1
     while MPI.Wtime() - start_time < max_time
-
         if MPI.Iprobe(comm; source=MPI.ANY_SOURCE)
             message = MPI.Recv(Message, comm; source=MPI.ANY_SOURCE)
             if message.command !== noCommand
@@ -97,6 +92,10 @@ function example_run()
 
         # do events
         check_and_do_events!(events, done_events, MPI.Wtime() - start_time)
+
+        if loop_counter % 5000 == 0 && we_do_timeout && MPI.Wtime() - start_time < (max_time - 10)
+            timeout(p, ←)
+        end
 
         # apply refresh speed
         sleep(sleep_time)
