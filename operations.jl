@@ -467,7 +467,7 @@ function timeout(p::Process, ←)
     for (level, nodes) in copy(p.levels) # CHECK if necessary
         # case list of one
         if length(nodes) == 1
-            @info "Timeout 1a" level, length(nodes) nodes[1] nodes p.self
+            @info "Timeout 1a" level length(nodes) nodes[1] nodes p.self
             nodes[1] ← linearize(p.self)
         else
             hash_ids = [h(x) for x in union(nodes, p.self)]
@@ -476,14 +476,15 @@ function timeout(p::Process, ←)
             insert!(nodes, pos, p.self)
 
             for i in 1:pos-1
-                @info "Timeout 1a" level, length(nodes) nodes[i] nodes[i+1] nodes p.self
+                @info "Timeout 1a" level length(nodes) nodes[i] nodes[i+1] nodes p.self
                 nodes[i] ← linearize(nodes[i + 1])
             end
 
             for i in reverse(pos+1:length(nodes))
-                @info "Timeout 1a" level, length(nodes) nodes[i] nodes[i-1] nodes p.self
+                @info "Timeout 1a" level length(nodes) nodes[i] nodes[i-1] nodes p.self
                 nodes[i] ← linearize(nodes[i - 1])
             end
+            deleteat!(nodes, pos)
         end
         sleep(1)
     end
@@ -494,40 +495,53 @@ function timeout(p::Process, ←)
             continue
         end
 
-        for node in nodes
-            @info "Timeout 1b 1" node nodes level p.self
-            ids = [bitstring(id(x)) for x in nodes]
-            perm_ids = sortperm(ids)
+        
 
-            pos = findfirst(nodes[perm_ids] .== node)
+        hash_ids = [h(x) for x in union(nodes, p.self)]
+        pids = sortperm(hash_ids)
+        pos = findfirst(union(nodes, p.self)[pids] .== p.self)
+        insert!(nodes, pos, p.self)
 
-            if pos == 1
-                prev = nothing
-            else
-                prev = pos - 1
-            end
+        ids = [bitstring(id(x)) for x in nodes]
+        
+        idsh, permh, permh⁻¹ = hash_props(nodes)
+        perm_ids = permh
+        perm_ids⁻¹ = permh⁻¹
+        context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
 
-            if pos == length(nodes)
-                after = nothing
-            else
-                after = pos + 1
-            end
 
-            for other in nodes
-                if other == p.self
-                    continue
-                end
+        if pos == 1
+            prev = nothing
+        else
+            prev = pos - 1
+        end
 
-                if bitstring(id(other)) < bitstring(id(node))
-                    if after !== nothing
-                        other ← linearize(nodes[perm_ids][after])
-                    end
-                else 
-                    if prev !== nothing
-                        other ← linearize(nodes[perm_ids][prev])
-                    end
+        if pos == length(nodes)
+            after = nothing
+        else
+            after = pos + 1
+        end
+        if after !== nothing && pos !== length(nodes)
+            for i in 1:pos-1
+                r = rangeᵢ(level, nodes[i], context...)
+                r2_pos = findfirst(nodes .== r[2])
+                @info "Timeout 1b" level nodes nodes[i] r r2_pos after
+                if after <= r2_pos
+                    nodes[i] ← linearize(nodes[perm_ids][after])
                 end
             end
         end
+
+        if prev !== nothing && pos !== 1
+            for i in pos+1:length(nodes)
+                r = rangeᵢ(level, nodes[i], context...)
+                r1_pos = findfirst(nodes .== r[1])
+                @info "Timeout 1b" level nodes nodes[i] r r1_pos prev
+                if prev >= r1_pos
+                    nodes[i] ← linearize(nodes[perm_ids][prev])
+                end
+            end
+        end
+        deleteat!(nodes, pos)
     end
 end
