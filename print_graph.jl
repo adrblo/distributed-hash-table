@@ -4,7 +4,8 @@ include("methods.jl")
 size = parse(Int, ARGS[2])
 mode = parse(Int, ARGS[1])
 
-(nodes, ids) = props(size)
+nodes = Array(range(0, size-1))
+ids = props(nodes)
 (idsh, permh, permh⁻¹) = hash_props(nodes)
 
 if mode == 0    

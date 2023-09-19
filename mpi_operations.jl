@@ -45,14 +45,14 @@ mutable struct Process
     levels::Dict{Int, Array{Int}}
 end
 
-function Process(rank::Int, size::Int)
-    nodes, ids = props(size)
+function Process(rank::Int, nodes::Array{Int})
+    ids = props(nodes)
     idsh, permh, permh⁻¹ = hash_props(nodes)
     context = (nodes, ids, permh, permh⁻¹, idsh, permh, permh⁻¹)
     left = predᵢ(nothing, 0, rank, context...)
     right = succᵢ(nothing, 0, rank, context...)
 
-    N, levels, circ = neighbors(rank, size)
+    N, levels, circ = neighbors(rank, nodes)
 
     storage = Dict()
 

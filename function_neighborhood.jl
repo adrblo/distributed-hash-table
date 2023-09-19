@@ -12,11 +12,10 @@ function id(x::Int)::UInt64
     return hash((x + 1) * mult)
 end
 
-function props(size::Int)
-    nodes::Vector{Int} = range(0, size-1)
+function props(nodes)
     ids::Vector{String} = [bitstring(id(x)) for x in nodes]
 
-    return nodes, ids
+    return ids
 end
 
 function hash_props(nodes)
@@ -27,9 +26,9 @@ function hash_props(nodes)
     return hs, perm, perm⁻¹
 end
 
-function neighbors(self::Int, size::Int)
+function neighbors(self::Int, nodes)
     # ⇒ ids[perm_ids] := sorted array of ids
-    nodes, ids = props(size)
+    ids = props(nodes)
     
     idsh, permh, permh⁻¹ = hash_props(nodes)
     perm_ids = permh
@@ -42,7 +41,7 @@ function neighbors(self::Int, size::Int)
     left = predᵢ(nothing, 0, self, context...) 
     right = succᵢ(nothing, 0, self, context...)
 
-    pos = permh⁻¹[self + 1]
+    pos = findfirst(nodes[permh] .== self)
     circ = nothing
     if pos == 1
         circ = nodes[permh][length(nodes)]
@@ -64,8 +63,10 @@ function neighbors(self::Int, size::Int)
         prefix = bitstring(id(self))[1:i]
 
         level_N = []
+        r1_pos = findfirst(nodes[permh] .== r[1])
+        r2_pos = findfirst(nodes[permh] .== r[2])
 
-        for j in perm_ids⁻¹[r[1] + 1]:perm_ids⁻¹[r[2] + 1]
+        for j in r1_pos:r2_pos
             idj = ids[perm_ids][j]
             if idj[1:i] == prefix
                 push!(N, nodes[perm_ids][j])

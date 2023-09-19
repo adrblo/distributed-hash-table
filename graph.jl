@@ -8,10 +8,11 @@ module M
     include("function_neighborhood.jl")
 end
 size = parse(Int, ARGS[1])
+nodes = Array(range(0, size-1))
 g = SimpleDiGraph(size)
 
 for node in 0:(size-1)
-    N, l, circ = M.neighbors(node, size)
+    N, l, circ = M.neighbors(node, nodes)
     for neig in N
         add_edge!(g, node + 1, neig + 1)
     end

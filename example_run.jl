@@ -76,7 +76,7 @@ function example_run()
     if rank in unconnected_nodes
         p = EmptyProcess(rank)
     else
-        p = Process(rank, size - length(unconnected_nodes))
+        p = Process(rank, setdiff(range(0, size-1), unconnected_nodes))
     end
     @info "Process" p.self p.left p.right p.circ p.neighbors p.storage h(p.self) bitstring(id(p.self))
     handle_message, ← = build_handle_message(rank, comm, p)
