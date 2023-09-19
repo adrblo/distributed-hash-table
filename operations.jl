@@ -528,8 +528,6 @@ function _join(p::Process, node, ←)
         r = hash_route(p.self, p.neighbors, h(node))
         r ← join(node)
     end
-    
-    #alle relevante daten aus speicher von pred(v) an v abgeben
 end
 
 function join(node)

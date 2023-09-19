@@ -28,7 +28,7 @@ function setup_events(self, comm, ←, p, number_ranks)
         Event(0, [4], () -> (29 ← insert(120, self))),
         Event(0, [0], () -> (29 ← insert(120, self))),
         Event(5, [14], () -> (31 ← join(self))),
-        # Case 1a: seach, lookup and delete value from case 1
+        # Case 1a: search, lookup and delete value from case 1
         Event(20, [4], () -> (29 ← search(g(120), self))),
         Event(20, [4], () -> (29 ← lookup(g(120), self))),
         Event(25, [4], () -> (29 ← delete(g(120), self))),

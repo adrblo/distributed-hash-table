@@ -10,7 +10,7 @@ ids = props(nodes)
 
 if mode == 0    
     for index in 1:size
-        println(string("Pos ", index, " Node: ", nodes[permh][index], " Hash: ", ids[permh][index]))
+        println(string("Pos ", index, " Node: ", nodes[permh][index], " Hash: ", idsh[permh][index]))
     end
 elseif mode == 1
     nodes = range(0, size-1)
