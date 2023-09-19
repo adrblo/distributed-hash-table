@@ -17,6 +17,7 @@
     command_linearize = 106
     transfer_element = 107
     forward_node = 108
+    forward_circ = 109
 end
 
 struct Message

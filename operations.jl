@@ -19,7 +19,8 @@ function build_handle_message(rank, comm, p)
             _join => (node) -> Message(process_join; node=node),
             _leave => (node) -> Message(process_leave; node=node),
             _leave_transfer => (data_hash, data) -> Message(transfer_element; data_hash=data_hash, data=data),
-            _leave_forward => (from, node) -> Message(forward_node; from=from, node=node)
+            _leave_forward => (from, node) -> Message(forward_node; from=from, node=node),
+            _become_circ => (node, from) -> Message(forward_circ; node=node, from=from)
         )
 
     map_from_message = Dict(
@@ -39,7 +40,8 @@ function build_handle_message(rank, comm, p)
             process_join => (f, n, d, s, dh, dk, p, ←) -> _join(p, n, ←),
             process_leave => (f, n, d, s, dh, dk, p, ←) -> _leave(p, n, ←),
             transfer_element => (f, n, d, s, dh, dk, p, ←) -> _leave_transfer(p, dh, d),
-            forward_node => (f, n, d, s, dh, dk, p, ←) -> _leave_forward(p, f, n)
+            forward_node => (f, n, d, s, dh, dk, p, ←) -> _leave_forward(p, f, n),
+            forward_circ => (f, n, d, s, dh, dk, p, ←) -> _become_circ(p, n, f)
         )
 
     function handle_message(message::Message)
@@ -302,10 +304,18 @@ function _linearize(p::Process, node, ←)
     end
 
     circ = p.circ
+    if p.circ !== nothing
+        if left !== nothing && p.left === nothing
+            left ← leave_circ(p.circ)
+            circ = nothing
+        elseif right !== nothing && p.right === nothing
+            right ← leave_circ(p.circ)
+            circ = nothing
+        end
+    end
+
     if p.right !== right && right !== nothing && right !== p.self
         dict_join!(p, ←, right)
-    elseif p.right === nothing && p.circ !== circ
-        dict_join!(p, ←, circ)
     end
 
     # re set direct neighbors
@@ -313,11 +323,33 @@ function _linearize(p::Process, node, ←)
     p.right = right
     p.neighbors = new_neighbors
     p.levels = levels
-    # TODO circle
+    p.circ = circ
 end
 
 function linearize(node)
     return (_linearize, (node,))
+end
+
+function _become_circ(p::Process, circ, from)
+    @info "BecomeCirc" p.self p.left p.right p.circ p.storage
+    if from == p.left || from == p.right
+        circ ← become_circ(p.self, p.self)
+    else
+        if p.right === nothing
+            @info "BecomeCirc DictJoin" p.storage circ h(circ)
+            for (k, v) in p.storage
+                if k >= h(circ) && k < h(p.self)
+                    circ ← leave_transfer(k, v)
+                    delete!(p.storage, k)
+                end
+            end
+        end
+    end
+    p.circ = circ
+end
+
+function become_circ(circ, from)
+    (_become_circ, (circ, from))
 end
 
 function dict_join!(p::Process, ←, right_node)
