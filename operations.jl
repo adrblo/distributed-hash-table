@@ -470,7 +470,9 @@ function timeout(p::Process, ←)
             @info "Timeout 1a" level, length(nodes) nodes[1] nodes p.self
             nodes[1] ← linearize(p.self)
         else
-            pos = trunc(Int, length(nodes)/2) + 1
+            hash_ids = [h(x) for x in union(nodes, p.self)]
+            perm_ids = sortperm(hash_ids)
+            pos = findfirst(union(nodes, p.self)[perm_ids] .== p.self)
             insert!(nodes, pos, p.self)
 
             for i in 1:pos-1

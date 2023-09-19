@@ -80,7 +80,7 @@ function neighbors(self::Int, nodes)
 
     delete!(N, self)
     Narray = collect(N)
-    nids = [bitstring(id(x)) for x in Narray]
+    nids = [h(x) for x in Narray]
     perm_ids = sortperm(nids)
 
     return Narray[perm_ids], levels, circ
@@ -197,6 +197,8 @@ function calc_neighbors(self::Int, neighbors)
 
     delete!(N, self)
     Narray = collect(N)
+    nids = [h(x) for x in Narray]
+    perm_ids = sortperm(nids)
 
-    return (Narray, left, right, levels)
+    return (Narray[perm_ids], left, right, levels)
 end
