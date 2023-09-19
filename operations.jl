@@ -301,6 +301,13 @@ function _linearize(p::Process, node, ←)
         end
     end
 
+    circ = p.circ
+    if p.right !== right && right !== nothing && right !== p.self
+        dict_join!(p, ←, right)
+    elseif p.right === nothing && p.circ !== circ
+        dict_join!(p, ←, circ)
+    end
+
     # re set direct neighbors
     p.left = left
     p.right = right
@@ -311,6 +318,16 @@ end
 
 function linearize(node)
     return (_linearize, (node,))
+end
+
+function dict_join!(p::Process, ←, right_node)
+    @info "DictJoin" p.storage right_node h(right_node)
+    for (k, v) in p.storage
+        if k >= h(right_node)
+            right_node ← leave_transfer(k, v)
+            delete!(p.storage, k)
+        end
+    end
 end
 
 function combine!(combines::Dict{Tuple{Command, Float64}, Array{Int}}, command::Command, data_key::Float64, from::Int)::Bool
