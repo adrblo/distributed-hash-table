@@ -24,6 +24,8 @@ function setup_events(self, comm, ←, p, number_ranks)
     # Events: (time in sec., ranks, function)
     events = [
         Event(0, [30], () -> (self ← insert(45, self))),
+        Event(0, [30], () -> (19 ← insert(70, self))),
+        Event(0, [29], () -> (19 ← insert(70, self))),
         Event(5, [31], () -> (30 ← join(self))),
         #Event(0, [17], () -> (self ← insert(100, self))),
         #Event(0, [17], () -> (p.storage[0.1] = 404)),

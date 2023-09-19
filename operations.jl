@@ -350,6 +350,7 @@ function split!(combines::Dict{Tuple{Command, Float64}, Array{Int}}, command::Co
     """
     Returns nodes which requested
     """
+    @info "Split" combines command data_key
     nodes::Array{Int} = get(combines, (command, data_key), [])
     if !isempty(nodes)
         delete!(combines, (command, data_key))
