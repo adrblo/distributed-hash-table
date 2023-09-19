@@ -1,24 +1,11 @@
 using MPI
 using Logging, LoggingExtras
 
-include("function_neighborhood.jl")
-include("methods.jl")
-include("mpi_operations.jl")
+include("backend.jl")
+include("process.jl")
+include("skip_plus.jl")
+include("hash_table.jl")
 include("operations.jl")
-
-function empty_message(rank)
-    return Message(noCommand; from=rank)
-end
-
-function send_message(command::Command, rank, dest, comm::MPI.Comm)
-    MPI.Isend(Message(command; from=rank), comm; dest=dest)
-end
-
-struct Event
-    start::Int
-    ranks::Vector{Int}
-    func::Function
-end
 
 function setup_events(self, comm, ←, p, number_ranks)
     # Events: (time in sec., ranks, function)

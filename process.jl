@@ -1,39 +1,3 @@
-@enum Command begin
-    noCommand = 0
-    otherCommand = 1
-    command_trace = 2
-    command_info = 3
-
-    request_search = 100
-    response_search = 200
-    insert_element = 101
-    response_insert = 201
-    delete_element = 102
-    response_delete = 202
-    lookup_element = 103
-    response_lookup = 203
-    process_join = 104
-    process_leave = 105
-    command_linearize = 106
-    transfer_element = 107
-    forward_node = 108
-    forward_circ = 109
-end
-
-struct Message
-    command::Command
-    from::Int
-    node::Int
-    data::Int
-    success::Bool
-    data_hash::Float64
-    data_key::Float64
-end
-
-function Message(command::Command; from::Int=0, node=0, data=0, success=false, data_hash=0.0, data_key=0)
-    return Message(command, from, node, data, success, data_hash, data_key)
-end
-
 mutable struct Process
     self::Int
     left::Union{Int, Nothing}
@@ -76,3 +40,11 @@ function EmptyProcess(rank::Int)
 
     return Process(rank, left, right, circ, N, storage, combines, levels)
 end
+
+struct Event
+    start::Int
+    ranks::Vector{Int}
+    func::Function
+end
+
+

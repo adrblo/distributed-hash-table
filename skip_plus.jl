@@ -1,11 +1,6 @@
 using Base
 using Logging
 
-# Idee:
-# ranks: Zahlenfolge 0..size <- x
-# Ranks mit Liste verbunden
-# id(x) = hash(x * mult)
-
 const mult = 2500
 
 function id(x::Int)::UInt64
