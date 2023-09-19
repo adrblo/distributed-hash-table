@@ -73,9 +73,19 @@ end
 
 function _search(p, ←, from, data_hash::Float64)
     self_hash = h(p.self)
-    left_hash = h(p.left)
-    right_hash = h(p.right)
-    if !(data_hash >= left_hash && data_hash <= right_hash)
+
+    if p.left !== nothing
+        left_hash = h(p.left)
+    else
+        left_hash = 0
+    end
+
+    if p.right !== nothing
+        right_hash = h(p.right)
+    else
+        right_hash = 1
+    end
+    if !(data_hash >= left_hash && data_hash <= right_hash) && !(p.circ !== nothing && data_hash < h(p.circ))
         not_already_requested = combine!(p.combines, response_search, data_hash, from)
         if not_already_requested
             r = hash_route(p.self, p.neighbors, data_hash)
@@ -84,9 +94,13 @@ function _search(p, ←, from, data_hash::Float64)
         end
         return
     else
-        if data_hash < self_hash
+        if data_hash < self_hash && p.right !== nothing
             @info "Search near" data_hash from self_hash
-            p.left ← search(data_hash, from)
+            if p.left !== nothing
+                p.left ← search(data_hash, from)
+            else
+                p.circ ← search(data_hash, from)
+            end
         else
             # search is at correct node
             @info "Search ARRIVED" data_hash from self_hash
@@ -126,9 +140,19 @@ end
 
 function _lookup(p, ←, from, data_hash)
     self_hash = h(p.self)
-    left_hash = h(p.left)
-    right_hash = h(p.right)
-    if !(data_hash >= left_hash && data_hash <= right_hash)
+
+    if p.left !== nothing
+        left_hash = h(p.left)
+    else
+        left_hash = 0
+    end
+
+    if p.right !== nothing
+        right_hash = h(p.right)
+    else
+        right_hash = 1
+    end
+    if !(data_hash >= left_hash && data_hash <= right_hash) && !(p.circ !== nothing && data_hash < h(p.circ))
         not_already_requested = combine!(p.combines, response_lookup, data_hash, from)
         if not_already_requested
             r = hash_route(p.self, p.neighbors, data_hash)
@@ -137,9 +161,13 @@ function _lookup(p, ←, from, data_hash)
         end
         return
     else
-        if data_hash < self_hash
+        if data_hash < self_hash && p.right !== nothing
             @info "Lookup near" data_hash from self_hash
-            p.left ← lookup(data_hash, from)
+            if p.left !== nothing
+                p.left ← lookup(data_hash, from)
+            else
+                p.circ ← lookup(data_hash, from)
+            end
         else
             # search is at correct node
             data = get(p.storage, data_hash, 0) # 0 means not found
@@ -204,9 +232,19 @@ end
 
 function _delete(p, ←, data_hash, from)
     self_hash = h(p.self)
-    left_hash = h(p.left)
-    right_hash = h(p.right)
-    if !(data_hash >= left_hash && data_hash <= right_hash)
+
+    if p.left !== nothing
+        left_hash = h(p.left)
+    else
+        left_hash = 0
+    end
+
+    if p.right !== nothing
+        right_hash = h(p.right)
+    else
+        right_hash = 1
+    end
+    if !(data_hash >= left_hash && data_hash <= right_hash) && !(p.circ !== nothing && data_hash < h(p.circ))
         not_already_requested = combine!(p.combines, response_delete, data_hash, from)
         if not_already_requested
             r = hash_route(p.self, p.neighbors, data_hash)
@@ -215,9 +253,13 @@ function _delete(p, ←, data_hash, from)
         end
         return
     else
-        if data_hash < self_hash
+        if data_hash < self_hash && p.right !== nothing
             @info "Delete near" data_hash from self_hash
-            p.left ← delete(data_hash, from)
+            if p.left !== nothing
+                p.left ← delete(data_hash, from)
+            else
+                p.circ ← delete(data_hash, from)
+            end
         else
             # insert is at correct node
             delete!(p.storage, data_hash)

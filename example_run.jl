@@ -23,16 +23,19 @@ end
 function setup_events(self, comm, ←, p, number_ranks)
     # Events: (time in sec., ranks, function)
     events = [
+        # Case 1: insert to end of chain and add node to begin of list
         Event(0, [30], () -> (self ← insert(67, self))),
         Event(0, [4], () -> (29 ← insert(120, self))),
         Event(0, [0], () -> (29 ← insert(120, self))),
         Event(5, [14], () -> (31 ← join(self))),
-        #Event(0, [17], () -> (self ← insert(100, self))),
-        #Event(0, [17], () -> (p.storage[0.1] = 404)),
-        #Event(4, [17], () -> (self ← search(g(100), self))),
-        #Event(4, [13], () -> (self ← lookup(g(101), self))),
-        #Event(6, [54], () -> (self ← delete(g(100), self))),
-        #Event(8, [17], () -> (self ← leave(self))),
+        # Case 1a: seach, lookup and delete value from case 1
+        Event(20, [4], () -> (29 ← search(g(120), self))),
+        Event(20, [4], () -> (29 ← lookup(g(120), self))),
+        Event(25, [4], () -> (29 ← delete(g(120), self))),
+        # Case 2: add values and search them
+        Event(10, [3], () -> (self ← insert(10, self))),
+        Event(15, [3], () -> (self ← search(g(10), self))),
+        Event(15, [3], () -> (self ← lookup(g(10), self)))
     ]
     
     rank_events = []
