@@ -1,4 +1,4 @@
-#  Development Repository for Implementing a Distributed Hash Table in Julia MPI
+#  Distributed Hash Table on a Skip+ Graph in Julia MPI
 
 ## Setup
 
