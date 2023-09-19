@@ -59,7 +59,7 @@ end
 
 function example_run()
     sleep_time = 0.01 # checkup and refresh delay
-    max_time = 20 # maximum time of run
+    max_time = 60 # maximum time of run
     unconnected_nodes = [31]
 
     start_time = MPI.Wtime()
@@ -75,7 +75,7 @@ function example_run()
     else
         p = Process(rank, size - length(unconnected_nodes))
     end
-    @info "Process" p
+    @info "Process" p.self p.left p.right p.circ p.neighbors p.storage h(p.self) bitstring(id(p.self))
     handle_message, ← = build_handle_message(rank, comm, p)
 
     events, done_events = setup_events(rank, comm, ←, p, size)
@@ -99,6 +99,8 @@ function example_run()
 
         loop_counter += 1
     end
+
+    @info "Process" p.self p.left p.right p.circ p.neighbors p.storage h(p.self) bitstring(id(p.self))
 
     MPI.Barrier(comm)
 end

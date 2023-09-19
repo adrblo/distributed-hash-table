@@ -39,8 +39,16 @@ function neighbors(self::Int, size::Int)
     N = Set()
     levels::Dict{Int, Array{Int}} = Dict()
 
-    left = predᵢ(nothing, 0, self, context...)
+    left = predᵢ(nothing, 0, self, context...) 
     right = succᵢ(nothing, 0, self, context...)
+
+    pos = permh⁻¹[self + 1]
+    circ = nothing
+    if pos == 1
+        circ = nodes[permh][length(nodes)]
+    elseif pos == length(nodes)
+        circ = nodes[permh][1]
+    end
 
     if left !== nothing
         push!(N, left)
@@ -78,7 +86,7 @@ function neighbors(self::Int, size::Int)
     nids = [bitstring(id(x)) for x in Narray]
     perm_ids = sortperm(nids)
 
-    return Narray[perm_ids], levels
+    return Narray[perm_ids], levels, circ
 end
 
 function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)::Union{Int, Nothing}
@@ -87,13 +95,12 @@ function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
 
     x+1 := Index of node x
     """
-    pos = findfirst(nodes .== x)
+    pos = findfirst(nodes[permh] .== x)
     if i === nothing
-        if x == nodes[permh][1]
-            return nodes[permh][size(nodes, 1)]
+        if pos == 1
+            return nothing
         else 
-            
-            return nodes[permh][permh⁻¹[pos] - 1]
+            return nodes[permh][pos - 1]
         end
     end
 
@@ -111,12 +118,12 @@ function succᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
 
     x+1 := Index of node x
     """
-    pos = findfirst(nodes .== x)
+    pos = findfirst(nodes[permh] .== x)
     if i === nothing
-        if x == nodes[permh][size(nodes, 1)]
-            return nodes[permh][1]
+        if pos == size(nodes, 1)
+            return nothing
         else
-            return nodes[permh][permh⁻¹[pos] + 1]
+            return nodes[permh][pos + 1]
         end
     end
 

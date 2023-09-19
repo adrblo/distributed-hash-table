@@ -44,6 +44,10 @@ function build_handle_message(rank, comm, p)
 
     function handle_message(message::Message)
         @info "Command handle" message.command
+        if get(map_from_message, message.command, nothing) === nothing
+            @info "Command ERROR"
+            return
+        end
         map_from_message[message.command](message.from, message.node, message.data, message.success, message.data_hash, message.data_key, p, ←)
         @info string("Call_self: " * string(rank) * " ← " * string(message.command) * " from " * string(rank)) message
     end
@@ -240,7 +244,7 @@ function info(content::Int)
 end
 
 function _linearize(p::Process, node, ←)
-    if node in p.neighbors
+    if node in p.neighbors || node == p.self
         return
     end
     
@@ -397,7 +401,7 @@ end
 
 function timeout(p::Process, ←)
     # rule 1a
-    for (level, nodes) in p.levels
+    for (level, nodes) in copy(p.levels) # CHECK if necessary
         # case list of one
         if length(nodes) == 1
             @info "Timeout 1a" level, length(nodes) nodes[1] nodes p.self
@@ -416,18 +420,19 @@ function timeout(p::Process, ←)
                 nodes[i] ← linearize(nodes[i - 1])
             end
         end
+        sleep(1)
     end
 
     # rule 1b
     for (level, nodes) in p.levels
+        if length(nodes) < 2
+            continue
+        end
+
         for node in nodes
+            @info "Timeout 1b 1" node nodes level p.self
             ids = [bitstring(id(x)) for x in nodes]
-            nodes = neighbors
-            
-            idsh, permh, permh⁻¹ = hash_props(neighbors)
-            perm_ids = permh
-            perm_ids⁻¹ = permh⁻¹
-            context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
+            perm_ids = sortperm(ids)
 
             pos = findfirst(nodes[perm_ids] .== node)
 
@@ -435,15 +440,6 @@ function timeout(p::Process, ←)
                 prev = nothing
             else
                 prev = pos - 1
-                for other in nodes[1:prev]
-                    r = rangeᵢ(level, other, context...)
-                    r1_pos = findfirst(nodes[perm_ids] .== r[1])
-                    r2_pos = findfirst(nodes[perm_ids] .== r[2])
-
-                    if perm_ids⁻¹[r[1]] < perm_ids⁻¹[prev] < perm_ids⁻¹[r[1]]
-                        #todo morgen
-                    end
-                end
             end
 
             if pos == length(nodes)
@@ -452,6 +448,21 @@ function timeout(p::Process, ←)
                 after = pos + 1
             end
 
+            for other in nodes
+                if other == p.self
+                    continue
+                end
+
+                if bitstring(id(other)) < bitstring(id(node))
+                    if after !== nothing
+                        other ← linearize(nodes[perm_ids][after])
+                    end
+                else 
+                    if prev !== nothing
+                        other ← linearize(nodes[perm_ids][prev])
+                    end
+                end
+            end
         end
     end
 end
