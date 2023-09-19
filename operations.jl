@@ -41,7 +41,7 @@ function build_handle_message(rank, comm, p)
             process_leave => (f, n, d, s, dh, dk, p, ←) -> _leave(p, n, ←),
             transfer_element => (f, n, d, s, dh, dk, p, ←) -> _leave_transfer(p, dh, d),
             forward_node => (f, n, d, s, dh, dk, p, ←) -> _leave_forward(p, f, n),
-            forward_circ => (f, n, d, s, dh, dk, p, ←) -> _become_circ(p, n, f)
+            forward_circ => (f, n, d, s, dh, dk, p, ←) -> _become_circ(p, ←, n, f)
         )
 
     function handle_message(message::Message)
@@ -158,9 +158,19 @@ end
 function _insert(p, ←, from, data)
     data_hash = g(data)
     self_hash = h(p.self)
-    left_hash = h(p.left)
-    right_hash = h(p.right)
-    if !(data_hash >= left_hash && data_hash <= right_hash)
+
+    if p.left !== nothing
+        left_hash = h(p.left)
+    else
+        left_hash = 0
+    end
+
+    if p.right !== nothing
+        right_hash = h(p.right)
+    else
+        right_hash = 1
+    end
+    if !(data_hash >= left_hash && data_hash <= right_hash) && !(p.circ !== nothing && data_hash < h(p.circ))
         not_already_requested = combine!(p.combines, response_insert, data_hash, from)
         if not_already_requested
             r = hash_route(p.self, p.neighbors, data_hash)
@@ -169,9 +179,13 @@ function _insert(p, ←, from, data)
         end
         return
     else
-        if data_hash < self_hash
+        if data_hash < self_hash && p.right !== nothing
             @info "Insert near" data_hash from self_hash
-            p.left ← insert(data, from)
+            if p.left !== nothing
+                p.left ← insert(data, from)
+            else
+                p.circ ← insert(data, from)
+            end
         else
             # insert is at correct node
             p.storage[data_hash] = data
@@ -305,12 +319,14 @@ function _linearize(p::Process, node, ←)
 
     circ = p.circ
     if p.circ !== nothing
-        if left !== nothing && p.left === nothing
-            left ← leave_circ(p.circ)
+        if left !== nothing && p.left === nothing && p.right !== nothing
+            left ← become_circ(p.circ, p.self)
             circ = nothing
-        elseif right !== nothing && p.right === nothing
-            right ← leave_circ(p.circ)
+            @info "Linearize Circ lost" p.circ p.left p.right left right
+        elseif right !== nothing && p.right === nothing && p.left !== nothing
+            right ← become_circ(p.circ, p.self)
             circ = nothing
+            @info "Linearize Circ lost" p.circ p.left p.right left right
         end
     end
 
@@ -330,9 +346,9 @@ function linearize(node)
     return (_linearize, (node,))
 end
 
-function _become_circ(p::Process, circ, from)
+function _become_circ(p::Process, ←, circ, from)
     @info "BecomeCirc" p.self p.left p.right p.circ p.storage
-    if from == p.left || from == p.right
+    if !(from == circ)
         circ ← become_circ(p.self, p.self)
     else
         if p.right === nothing
@@ -346,6 +362,7 @@ function _become_circ(p::Process, circ, from)
         end
     end
     p.circ = circ
+    @info "BecomeCirc END" p.left p.right p.circ 
 end
 
 function become_circ(circ, from)
@@ -373,9 +390,12 @@ function combine!(combines::Dict{Tuple{Command, Float64}, Array{Int}}, command::
         else
             push!(combines[(command, data_key)], from)
         end
-        return true
     end
-    return false
+    if isempty(nodes)
+        return true
+    else
+        return false
+    end
 end
 
 function split!(combines::Dict{Tuple{Command, Float64}, Array{Int}}, command::Command, data_key::Float64)::Array{Int}

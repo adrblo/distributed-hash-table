@@ -23,10 +23,10 @@ end
 function setup_events(self, comm, ←, p, number_ranks)
     # Events: (time in sec., ranks, function)
     events = [
-        Event(0, [30], () -> (self ← insert(45, self))),
-        Event(0, [8], () -> (19 ← insert(70, self))),
-        Event(0, [22], () -> (19 ← insert(70, self))),
-        Event(5, [31], () -> (30 ← join(self))),
+        Event(0, [30], () -> (self ← insert(67, self))),
+        Event(0, [4], () -> (29 ← insert(120, self))),
+        Event(0, [0], () -> (29 ← insert(120, self))),
+        Event(5, [14], () -> (31 ← join(self))),
         #Event(0, [17], () -> (self ← insert(100, self))),
         #Event(0, [17], () -> (p.storage[0.1] = 404)),
         #Event(4, [17], () -> (self ← search(g(100), self))),
@@ -63,7 +63,7 @@ function example_run()
     sleep_time = 0.001 # checkup and refresh delay
     max_time = 60 # maximum time of run
     we_do_timeout = true
-    unconnected_nodes = [31]
+    unconnected_nodes = [14]
 
     start_time = MPI.Wtime()
     comm = MPI.COMM_WORLD

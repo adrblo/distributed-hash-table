@@ -1,8 +1,8 @@
 include("function_neighborhood.jl")
 include("methods.jl")
 
-for i in 1:100
-    if h(17) < g(i) < h(6)
+for i in 1:1000
+    if h(14) < g(i) < h(28)
         println(i, " ", g(i))
     end
 end
