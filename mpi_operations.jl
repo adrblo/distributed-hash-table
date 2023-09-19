@@ -48,11 +48,10 @@ function Process(rank::Int, size::Int)
     nodes, ids = props(size)
     idsh, permh, permh⁻¹ = hash_props(nodes)
     context = (nodes, ids, permh, permh⁻¹, idsh, permh, permh⁻¹)
-    #left = predᵢ(nothing, 0, rank, context...)
-    #right = succᵢ(nothing, 0, rank, context...)
+    left = predᵢ(nothing, 0, rank, context...)
+    right = succᵢ(nothing, 0, rank, context...)
 
-    N_, levels_, circ = neighbors(rank, size)
-    (N, left, right, levels) = calc_neighbors(rank, nodes)
+    N, levels, circ = neighbors(rank, size)
 
     storage = Dict()
 

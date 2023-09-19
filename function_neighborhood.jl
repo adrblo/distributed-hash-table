@@ -60,6 +60,7 @@ function neighbors(self::Int, size::Int)
 
     for i in 0:length(ids[1])
         r = rangeᵢ(i, self, context...)
+        @info "Range" i r
 
         prefix = bitstring(id(self))[1:i]
 
@@ -67,7 +68,7 @@ function neighbors(self::Int, size::Int)
 
         for j in perm_ids⁻¹[r[1] + 1]:perm_ids⁻¹[r[2] + 1]
             idj = ids[perm_ids][j]
-            if startswith(idj, prefix)
+            if idj[1:i] == prefix
                 push!(N, nodes[perm_ids][j])
                 if nodes[perm_ids][j] !== self
                     push!(level_N, nodes[perm_ids][j])
@@ -104,7 +105,7 @@ function predᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
         end
     end
 
-    for index in (perm_ids⁻¹[pos] - 1):-1:1
+    for index in (pos - 1):-1:1
         if startswith(ids[perm_ids][index], bitstring(id(x))[1:i] * string(b))
             return nodes[perm_ids][index]
         end
@@ -127,7 +128,7 @@ function succᵢ(i::Union{Int, Nothing}, b::Int, x::Int, nodes, ids, perm_ids, p
         end
     end
 
-    for index in (perm_ids⁻¹[pos] + 1):+1:size(nodes, 1)
+    for index in (pos + 1):+1:size(nodes, 1)
         if startswith(ids[perm_ids][index], bitstring(id(x))[1:i] * string(b))
             return nodes[perm_ids][index]
         end
