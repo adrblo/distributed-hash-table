@@ -60,8 +60,7 @@ function neighbors(self::Int, size::Int)
 
     for i in 0:length(ids[1])
         r = rangeᵢ(i, self, context...)
-        @info "Range" i r
-
+        
         prefix = bitstring(id(self))[1:i]
 
         level_N = []
