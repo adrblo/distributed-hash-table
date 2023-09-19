@@ -2,25 +2,15 @@
 
 ## Setup
 
-Enter Packagemode in Julia REPL and add MPITape Fork
+Enter Packagemode in Julia REPL
 
 ```
-] add https://github.com/adrblo/MPITape.jl.git#custom-overdub
 ] add MPI
-```
-
-### Install MPIExcecJL
-
-Open a Julia REPL and enter:
-
-```
-using MPI
-MPI.install_mpiexecjl()
 ```
 
 ## Running
 
 ```
-mpiexecjl -n 4 julia --project example_run.jl 
+mpiexecjl -n 32 julia --project example_run.jl 
 ```
 
