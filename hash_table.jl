@@ -12,15 +12,15 @@ end
 
 
 function hash_route(self::Int, N::Vector{Int}, data_hash)
-    if !(self in N)
-        push!(N, self) # uggly hack
-    end
     nodes = N
-    ids::Vector{Float64} = [h(node) for node in N]
+    if !(self in nodes)
+        push!(nodes, self)
+    end
+    ids::Vector{Float64} = [h(node) for node in nodes]
     perm_ids = sortperm(ids)
     perm_ids⁻¹ = sortperm(perm_ids)
 
-    self_pos_sort = perm_ids⁻¹[length(N)]
+    self_pos_sort = perm_ids⁻¹[length(nodes)]
 
     if data_hash == h(self)
         return self
@@ -36,12 +36,12 @@ function hash_route(self::Int, N::Vector{Int}, data_hash)
             end
         end
     else
-        if data_hash > ids[perm_ids][length(N)]
-            return nodes[perm_ids][length(N)]
+        if data_hash > ids[perm_ids][length(nodes)]
+            return nodes[perm_ids][length(nodes)]
         end
 
         # right between or non existent
-        for index in length(N):-1:self_pos_sort+1
+        for index in length(nodes):-1:self_pos_sort+1
             if data_hash >= ids[perm_ids][index]
                 return nodes[perm_ids][index]
             end

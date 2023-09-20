@@ -495,8 +495,6 @@ function timeout(p::Process, ←)
             continue
         end
 
-        
-
         hash_ids = [h(x) for x in union(nodes, p.self)]
         pids = sortperm(hash_ids)
         pos = findfirst(union(nodes, p.self)[pids] .== p.self)
@@ -508,7 +506,6 @@ function timeout(p::Process, ←)
         perm_ids = permh
         perm_ids⁻¹ = permh⁻¹
         context = (nodes, ids, perm_ids, perm_ids⁻¹, idsh, permh, permh⁻¹)
-
 
         if pos == 1
             prev = nothing

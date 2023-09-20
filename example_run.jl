@@ -95,7 +95,10 @@ function example_run()
 
         loop_counter += 1
     end
-
+    if p.self in p.neighbors
+        pos = findfirst(p.neighbors .== p.self)
+        deleteat!(p.neighbors, pos)
+    end
     @info "Process" p.self p.left p.right p.circ p.neighbors p.storage h(p.self) bitstring(id(p.self))
 
     MPI.Barrier(comm)
